@@ -48,12 +48,12 @@ class vec:
 		'Return the squared length of the vector.'
 		rsq = 0.0;
 		for i in range(0, len(self.pos)):
-			rsq += self.pos[i]**2:
+			rsq += self.pos[i]**2
 		return rsq;
 
 	def r( self ):
 		'Return the length of the vector.'
-		return math.sqrt( self.rsq() );
+		return sqrt( self.rsq() );
 
 	length = r # alias
 
@@ -61,7 +61,7 @@ class vec:
 		'Return the dot product of two vectors.'
 		result = 0.0;
 		for i in range(0, len(self.pos)):
-			result += self.pos[i] * other.pos[i]:
+			result += self.pos[i] * other.pos[i]
 		return result;
 
 	def normalize( self ):
