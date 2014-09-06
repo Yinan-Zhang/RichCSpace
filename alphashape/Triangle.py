@@ -30,9 +30,9 @@ class Triangle:
 		return edges;
 
 	def is_filled(self, surf):
-		ball1 = self.spheres[0];
-		ball2 = self.spheres[1];
-		ball3 = self.spheres[2];
+		A = self.spheres[0].center;
+		B = self.spheres[1].center;
+		C = self.spheres[2].center;
 
 		l1 = (A-B).r();
 		l2 = (A-C).r();
@@ -43,6 +43,10 @@ class Triangle:
 		A = v2(0.0, 0.0);							r_a = ball1.radius;
 		B = v2(l1, 0);								r_b = ball2.radius;
 		C = v2(l2*cos_a, l2*sin_a);					r_c = ball3.radius;
+
+		ball1 = sphere( A, self.spheres[0].radius );
+		ball2 = sphere( B, self.spheres[1].radius );
+		ball3 = sphere( C, self.spheres[2].radius );
 
 		# 1. First Radical Axis
 		mid1 = A + (B-A).normalize() * ( l1**2 + r_a**2 - r_b**2 ) / (2 * l1); 
