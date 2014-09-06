@@ -152,7 +152,7 @@ class vec:
 #========================================================================================
 # Sphere in high dimension
 #========================================================================================
-class sphere:
+class hyper_sphere:
 	def __init__( self, center, radius ):
 		''' Open high dimensional sphere
 		@param center: (vec) the center of the sphere

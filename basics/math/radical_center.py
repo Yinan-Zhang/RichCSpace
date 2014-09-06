@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from scipy import linalg
-from hyper_geometry import vec, sphere
+from hyper_geometry import vec, hyper_sphere
 
 def radical_center(spheres):
     n = len(spheres)
