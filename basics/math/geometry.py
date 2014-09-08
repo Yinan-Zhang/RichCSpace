@@ -47,8 +47,8 @@ class v2( object ):
   __slots__ = ['x','y']
 
   def __init__( self, x, y ):
-    self.x = x
-    self.y = y
+    self.x = float(x)
+    self.y = float(y)
 
   @classmethod
   def polar( cls, r, radians ):
@@ -92,6 +92,10 @@ class v2( object ):
     'Return the length of the vector.'
     x, y = self.x, self.y
     return sqrt( x*x + y*y )
+
+  def l1(self):
+    '''return the L1 distance'''
+    return self.x+self.y
 
   length = r # alias
 

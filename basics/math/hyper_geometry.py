@@ -55,6 +55,10 @@ class vec:
 		'Return the length of the vector.'
 		return sqrt( self.rsq() );
 
+	def l1(self):
+		'''return the L1 distance'''
+		return sum(self.pos);
+
 	length = r # alias
 
 	def dot( self, other ):

@@ -27,7 +27,7 @@ class DiffDriveConfig( Config ):
 	def __init__(self, *args):
 		"""@param *args: list of arguments. """
 		Config.__init__(*args);
-		if len(self) != 3:
+		if len(*args) != 3:
 			raise Exception('The dimension has to be 3: ( x, y, phi )')
 		self.pos = v2(self.__getitem__(0), self.__getitem__(0));
 		self.orient = orient;
@@ -46,9 +46,9 @@ class Robot:
 		self.config = None;
 		pass;
 
-	def position(self):
-		'''returns the position of the robot.'''
-		pass;
+	#def position(self):
+	#	'''returns the position of the robot.'''
+	#	pass;
 
 	def set_config(self, config):
 		'''set configuration of the robot.
@@ -83,6 +83,7 @@ class DiffDriveRobot( Robot ):
 
 	def position(self):
 		return self.config.pos;
+		
 	def orientation(self):
 		return self.config.orient;
 

@@ -14,7 +14,7 @@ __revision__ = '$Revision$'
 import sys, os, math
 import pygame
 
-import geometry
+from geometry import *
 
 
 class Polygon:
@@ -40,11 +40,32 @@ class Polygon:
 		pygame.draw.polygon(surface, color, pointlist);
 		pass;
 
+	def translate( self, vect ):
+		'''translate the polygon along a vect '''
+		self.lines = [];
+		self.vertices[0] += vect;
+		for i in range(1, len(self.vertices)):
+			self.vertices[i] += vect;
+			line  = line_segment(self.vertices[i-1], self.vertices[i]);
+			self.lines.append(line);
+
+		start = self.vertices[-1];
+		end   = self.vertices[0];
+		self.lines.append( line_segment( start, end ) );
+		pass;
+
 	def intersects(self, line_seg):
 		"""polygon-line intersectiong test.
 		@param line_seg: line_segment."""
 		for line in self.lines:
 			if line.intersects_segment( line_seg ):
+				return True;
+		return False;
+
+	def intersects_poly(self, other):
+		'''determine if self intersects another polygon'''
+		for line in other.lines:
+			if self.intersects( line ):
 				return True;
 		return False;
 
