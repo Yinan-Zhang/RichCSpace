@@ -9,6 +9,44 @@ from configuration import *
 from robot import *
 from BlockRobot import *
 
+class Sample(hyper_sphere):
+	'''A sample is a configuration with clearance. '''
+	def __init__( self, center, radius ):
+		hyper_sphere.__init__(center, radius);
+		self.rnd_cfgs = []; 					# Random configurations 
+		self.bnd_cfgs = [];						# boundary configurations
+		self.closed = False;
+
+	def distance(self, point):
+		'''distance from a point to the boundary of the sphere'''
+		centerdist = (point - self.center).r();
+		return centerdist - self.radius;
+
+	def add(self, point):
+		'''if the point is inside it, add it to the rnd_cfgs set.'''
+		if not self.contains(point):
+			return False;
+		if self.__closed__:
+			return True;
+		self.rnd_cfgs.append( point );
+		return True;
+
+	def boundary_configs(self):
+		'''Push all configs to the boundary of the sphere'''
+		if self.bnd_cfgs is not None:
+			return self.bnd_cfgs;
+		self.bnd_cfgs = [];
+		for point in self.rnd_cfgs:
+			dir = (point - self.center);
+			if dir.r() == 0:
+				dir = v2(1,3);
+			dir = dir.normalize();
+			bnd_cfg = self.center + dir * (self.radius+0.5);
+			self.bnd_cfgs.append( bnd_cfg );
+
+		#self.rnd_cfgs = [];
+		return self.bnd_cfgs;
+
 class samplinghelper:
 	def __init__( self ):
 		pass;
@@ -87,5 +125,5 @@ class MedialAxisSampling:
 		ma_samples = []
 
 		for config in randSamples:
-			
+			for sphere in self.ma_samples
 
