@@ -24,6 +24,9 @@ class vec:
 		'''@param coords: n-element list'''
 		self.pos = coords;
 
+	def __str__( self ):
+		return str(self.pos);
+
 	def __eq__( self, other ):
 		if len(self) != len(other):
 			return False;
