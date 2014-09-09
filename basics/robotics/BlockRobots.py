@@ -1,6 +1,6 @@
 
 __all__ = [
-  'Block Robot'
+  'BlockRobot', 'BlockRobotConfig'
 ]
 
 '''
@@ -58,6 +58,13 @@ class Block(Polygon):
 
 		return chosen;
 
+	def distance2wall(self, dimensions = (800,800)):
+		'''distance to wall'''
+		dists = []
+		for vert in self.vertices:
+			dists.append( min([ vert.x, vert.y, math.fabs(dimensions[0]-vert.x), math.fabs(dimensions[1]-vert.y) ]) )
+		return min(dists);
+
 class BlockRobot( Robot ):
 	def __init__(self, unit_len=15):
 		self.unit_size = unit_len;
@@ -85,10 +92,10 @@ class BlockRobot( Robot ):
 
 	def set_config(self, config):
 		if not isinstance(config, BlockRobotConfig):
-			blc_config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
+			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
 			#raise Exception('Wrong Configuration class. Has to be a BlockRobotConfig instance')
 		old_cfg = copy.copy(self.config);
-		self.config = blc_config;
+		self.config = config;
 		vect1 = v2( self.config[0]-old_cfg[0], self.config[1]-old_cfg[1]);
 		vect2 = v2( self.config[2]-old_cfg[2], self.config[3]-old_cfg[3]);
 		self.blocks[0].translate(vect1);
@@ -99,9 +106,14 @@ class BlockRobot( Robot ):
 
 	def is_valid_config(self, config):
 		if not isinstance(config, BlockRobotConfig):
-			blc_config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
+			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
 		oldconfig = copy.copy(self.config);
-		self.set_config( blc_config );
+		self.set_config( config );
+		for i in range(0,2):
+			for vert in self.blocks[i].vertices:
+				if vert.x <=0 or vert.y <= 0 or vert.x >= 800 or vert.y >= 800:
+					return False;
+
 		intersects = self.blocks[0].intersects_poly( self.blocks[1] );
 		self.set_config( oldconfig );
 		return not intersects;
@@ -112,20 +124,30 @@ class BlockRobot( Robot ):
 		if self.is_valid_config(config):
 			collision_cfg = self.get_collission_config(config);
 			if mode == 'L2' or mode == 'l2':
-				return (collision_cfg-config).r();
+				return min( [self.__clearance2wall__(config) ,(collision_cfg-config).r()]);
 			elif mode == 'L1' or mode == 'l1':
-				return (collision_cfg-config).l1();
+				return min( [self.__clearance2wall__(config) ,(collision_cfg-config).l1()] );
 		else:
 			return -1.0;
+
+	def __clearance2wall__(self, config):
+		'''given a configuration, return its clearance to wall'''
+		old_cfg = copy.copy(self.config);
+		self.set_config(config);
+		dists = []
+		dists.append( self.blocks[0].distance2wall());
+		dists.append( self.blocks[1].distance2wall());
+		self.set_config(old_cfg);
+		return min(dists);
 
 	def get_collission_config( self, config ):
 		'''given a configuration, get the nearest collission config'''
 		if not isinstance(config, BlockRobotConfig):
-			blc_config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
+			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
 		old_cfg = copy.copy(self.config);
-		self.set_config(blc_config);
+		self.set_config(config);
 		dist_vec = self.blocks[0].distance(self.blocks[1]);
-		collision_cfg = BlockRobotConfig( blc_config[0]+dist_vec.x/2.0, blc_config[1]+dist_vec.y/2.0, blc_config[2]-dist_vec.x/2.0, blc_config[3]-dist_vec.y/2.0 );
+		collision_cfg = BlockRobotConfig( config[0]+dist_vec.x/2.0, config[1]+dist_vec.y/2.0, config[2]-dist_vec.x/2.0, config[3]-dist_vec.y/2.0 );
 		self.set_config(old_cfg);
 		return collision_cfg;
 
@@ -140,7 +162,7 @@ class BlockRobot( Robot ):
 		surf.blit(s, (0,0));
 		pygame.display.update();
 
-'''
+
 if __name__ == '__main__':
 	WIDTH = 800;
 	HEIGHT = 800;
@@ -153,7 +175,7 @@ if __name__ == '__main__':
 	robot = BlockRobot( );
 	startConfig = BlockRobotConfig(100,200, 700, 600);
 	goalConfig = BlockRobotConfig(400,400, 482.5, 332.5);
-	testConfig = BlockRobotConfig(400, 400, 460, 500);
+	testConfig = BlockRobotConfig(524,852,724,557);
 
 	print robot.config_clearance(testConfig);
 
@@ -166,4 +188,3 @@ if __name__ == '__main__':
 	#pygame.display.update();
 
 	pygame.image.save(DISPLAYSURF, 'BlockRobot.PNG');
-'''

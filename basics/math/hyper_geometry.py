@@ -47,6 +47,9 @@ class vec:
 	def __getitem__(self, key):
 		return self.pos[key];
 
+	def __setitem__(self, key, value):
+		self.pos[key] = value;
+
 	def rsq( self ):
 		'Return the squared length of the vector.'
 		rsq = 0.0;

@@ -1,18 +1,19 @@
 
-import sys,os,math
+import sys,os,math,random
 
 sys.path.append('../basics/math')
 sys.path.append('../basics/robotics')
 
-from geometry import *
-from configuration import *
-from robot import *
-from BlockRobot import *
+from geometry 		import *
+from hyper_geometry import *
+from configuration 	import *
+from robot 			import *
+from BlockRobots 	import *
 
 class Sample(hyper_sphere):
 	'''A sample is a configuration with clearance. '''
 	def __init__( self, center, radius ):
-		hyper_sphere.__init__(center, radius);
+		hyper_sphere.__init__(self,center, radius);
 		self.rnd_cfgs = []; 					# Random configurations 
 		self.bnd_cfgs = [];						# boundary configurations
 		self.closed = False;
@@ -72,30 +73,44 @@ class BlockSamplingHelper( samplinghelper ):
 		if not isinstance(robot, BlockRobot):
 			raise Exception( 'Please give a BlockRobot instance' );
 		if not isinstance(config, BlockRobotConfig):
-			raise Exception('Please give a BlockRobotConfig instance');
+			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
 		return robot.is_valid_config( config )
 
-	def config_clearance( self, robot, config, mode = 'L2' ):
-		'''get the config clearance with L2 metric'''
+	def config_clearance( self, robot, config, dimensions, mode = 'L2' ):
+		'''get the config clearance with L2 metric.
+		@param dimensions: max values of each dimension'''
 		if not isinstance(robot, BlockRobot):
 			raise Exception( 'Please give a BlockRobot instance' );
 		if not isinstance(config, BlockRobotConfig):
-			raise Exception('Please give a BlockRobotConfig instance');
+			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
+
+		#wall_dists = [0] * len(dimensions);
+		#for i in range(0, len(dimensions)):
+		#	wall_dists[i] = min( [math.fabs(config[i]), math.fabs(dimensions[i]-config[i]) ] )
+
+		#return min( [min(wall_dists) ,robot.config_clearance(config, mode)]);
 		return robot.config_clearance(config, mode);
 
-	def maSample(self, robot, config, direction, max_len):
-		'''get the medial axis sample along a directon, with max length'''
+	def maSample(self, robot, config, direction, max_len, dimensions):
+		'''get the medial axis sample along a directon, with max length.
+		@param dimensions: max values of each dimension'''
 		if not self.is_valid_config(robot, config):
 			raise Exception('Has to be a feasible configuration');
 		t = 1;
 		last_increase = False;
-		last_dist = self.config_clearance(robot, config);
-		this_increase = ((this_dist-last_dist)>0);
+		last_dist = self.config_clearance(robot, config, dimensions);
+		#dists = [last_dist];
 		while True:
+			if t-1 >= max_len:
+				break;
 			temp = config + direction * t
-			this_dist = self.config_clearance(robot, config);
+			this_dist = self.config_clearance(robot, config, dimensions); 
+			if this_dist <=0:
+				t += 1;
+				continue;
+			this_increase = ((this_dist-last_dist)>0);
 			if last_dist and not this_increase:
-				if not self.is_valid_config(robot, temp):
+				if self.is_valid_config(robot, temp):
 					return temp, this_dist;
 				else:
 					return None, None;
@@ -104,12 +119,9 @@ class BlockSamplingHelper( samplinghelper ):
 				last_increase = this_increase;
 				last_dist = this_dist;
 
-			if t-1 >= max_len:
-				break;
-
 		return None, None;
 
-class MedialAxisSampling:
+class MedialAxisSampler:
 	'''sampling on medial axis'''
 	def __init__(self, robot, helper ):
 		if not isinstance(robot, Robot):
@@ -119,11 +131,67 @@ class MedialAxisSampling:
 		self.robot = robot;
 		self.helper = helper;
 
-	def sample_medial_axis(self, randSamples):
-		'''Given a bunch of random samples, find some medial axis samples using them'''
-		length = 40;
+	def random_configs(self, dim, num, dimensions):
+		'''get a number of random configurations in dim-dimensional space
+		@param dimensions: max values of each dimension'''
+		rnd_cfgs = []
+		for i in range(0, num):
+			cfg = [0]*dim;
+			for j in range(0, dim):
+				cfg[j] = random.randint( 0, dimensions[j] );
+
+			if self.helper.is_valid_config(self.robot, cfg):
+				rnd_cfgs.append( Config(cfg) );
+			else:
+				i -= 1;
+		return rnd_cfgs;
+
+	def random_dir(self, dim):
+		'''get a random dirtion in dim-dimensional space.
+		'''
+		dir = vec([0]*dim);
+		for i in range(0, dim):
+			dir[i] = random.randint( -100, 100 );
+
+		if dir.r() == 0:
+			dir = vec( [1]*dim );
+
+		return dir;
+
+	def sample_medial_axis(self, randSamples, dimensions):
+		'''Given a bunch of random samples, find some medial axis samples using them.
+		@param dimensions: max values of each dimension'''
+		length = 50;
 		ma_samples = []
 
 		for config in randSamples:
-			for sphere in self.ma_samples
+			good = True;
+			for sphere in ma_samples:
+				if sphere.contains(config):
+					good = False;
+					break;
+			if not good:
+				continue;
 
+			rnd_dir = self.random_dir( len(config) );
+			center, clearance = self.helper.maSample(self.robot, config, rnd_dir, length, dimensions);
+			if clearance == None:
+				continue;
+			sample = Sample(center, clearance);
+			ma_samples.append(sample);
+
+		return ma_samples;
+
+
+	def save_data( self, samples, filename ):
+		'''Save sampled spheres. Write data to a file'''
+		file2write = open( filename, 'w' );
+		formattedData = "";
+		for sphere in samples:
+			for i in range(0, len(sphere.center)):
+				formattedData += str( sphere.center[i] ) + "\t";
+			formattedData += str( sphere.radius);
+			formattedData += "\n";
+
+		file2write.write( formattedData );
+		file2write.close();
