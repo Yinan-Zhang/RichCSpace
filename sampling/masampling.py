@@ -99,18 +99,21 @@ class BlockSamplingHelper( samplinghelper ):
 		t = 1;
 		last_increase = False;
 		last_dist = self.config_clearance(robot, config, dimensions);
-		#dists = [last_dist];
+		dists = [last_dist];
 		while True:
 			if t-1 >= max_len:
-				break;
+				return None, None;
 			temp = config + direction * t
-			this_dist = self.config_clearance(robot, config, dimensions); 
-			if this_dist <=0:
-				t += 1;
-				continue;
+			#print temp
+			this_dist = self.config_clearance(robot, temp, dimensions); 
+			dists.append(this_dist);
+			if this_dist <=0 or this_dist-last_dist == 0:
+				break;
 			this_increase = ((this_dist-last_dist)>0);
-			if last_dist and not this_increase:
+			if last_increase and not this_increase:
 				if self.is_valid_config(robot, temp):
+					print '-----------------------------'
+					print dists
 					return temp, this_dist;
 				else:
 					return None, None;
@@ -131,37 +134,57 @@ class MedialAxisSampler:
 		self.robot = robot;
 		self.helper = helper;
 
+	def random_invalid_configs(self, dim, num, dimensions):
+		'''get a number of random invalid configurations in dim-dimensional space
+		@param dimensions: max values of each dimension'''
+		rnd_cfgs = []
+
+		for i in range(0, num):
+			cfg = [0]*dim;
+			cfg[0] = cfg[1] = 400.0;
+			for j in range(2, dim):
+				cfg[j] = float(random.randint( 0, dimensions[j] ));
+			if not self.helper.is_valid_config(self.robot, cfg):
+				rnd_cfgs.append( Config(cfg) );
+			else:
+				i -= 1;
+
+		return rnd_cfgs;
+
 	def random_configs(self, dim, num, dimensions):
 		'''get a number of random configurations in dim-dimensional space
 		@param dimensions: max values of each dimension'''
 		rnd_cfgs = []
+
 		for i in range(0, num):
 			cfg = [0]*dim;
-			for j in range(0, dim):
-				cfg[j] = random.randint( 0, dimensions[j] );
-
+			cfg[0] = cfg[1] = 400.0;
+			for j in range(2, dim):
+				cfg[j] = float(random.randint( 0, dimensions[j] ));
 			if self.helper.is_valid_config(self.robot, cfg):
 				rnd_cfgs.append( Config(cfg) );
 			else:
 				i -= 1;
+
 		return rnd_cfgs;
 
 	def random_dir(self, dim):
 		'''get a random dirtion in dim-dimensional space.
 		'''
 		dir = vec([0]*dim);
-		for i in range(0, dim):
-			dir[i] = random.randint( -100, 100 );
+		dir[0] = dir[1] = 0.0;
+		for i in range(2, dim):
+			dir[i] = float(random.randint( -100, 100 ));
 
 		if dir.r() == 0:
 			dir = vec( [1]*dim );
 
-		return dir;
+		return dir.normalize();
 
 	def sample_medial_axis(self, randSamples, dimensions):
 		'''Given a bunch of random samples, find some medial axis samples using them.
 		@param dimensions: max values of each dimension'''
-		length = 50;
+		length = 40;
 		ma_samples = []
 
 		for config in randSamples:

@@ -59,7 +59,7 @@ class Block(Polygon):
 		return chosen;
 
 	def distance2wall(self, dimensions = (800,800)):
-		'''distance to wall'''
+		'''distance to wall, return movement vector'''
 		dists = []
 		for vert in self.vertices:
 			dists.append( min([ vert.x, vert.y, math.fabs(dimensions[0]-vert.x), math.fabs(dimensions[1]-vert.y) ]) )
@@ -68,8 +68,8 @@ class Block(Polygon):
 class BlockRobot( Robot ):
 	def __init__(self, unit_len=15):
 		self.unit_size = unit_len;
-		pntlist = [ v2(0,0), v2(4,0), v2(4,-3), v2(3,-3), v2(3,-1), v2(1,-1), v2(1,-7), v2(4,-7), v2(4,-8), v2(0,-8) ];
-
+		#pntlist = [ v2(0,0), v2(4,0), v2(4,-3), v2(3,-3), v2(3,-1), v2(1,-1), v2(1,-7), v2(4,-7), v2(4,-8), v2(0,-8) ];
+		pntlist = [ v2( 0,0 ), v2( 4,0 ), v2( 4,-4 ), v2( 0, -4 ) ];
 		for point in pntlist:
 			point *= self.unit_size;
 
@@ -124,13 +124,13 @@ class BlockRobot( Robot ):
 		if self.is_valid_config(config):
 			collision_cfg = self.get_collission_config(config);
 			if mode == 'L2' or mode == 'l2':
-				return min( [self.__clearance2wall__(config) ,(collision_cfg-config).r()]);
+				return min( [self.clearance2wall(config) / (1.0),(collision_cfg-config).r()]);
 			elif mode == 'L1' or mode == 'l1':
-				return min( [self.__clearance2wall__(config) ,(collision_cfg-config).l1()] );
+				return min( [self.clearance2wall(config), (collision_cfg-config).l1()] );
 		else:
 			return -1.0;
 
-	def __clearance2wall__(self, config):
+	def clearance2wall(self, config):
 		'''given a configuration, return its clearance to wall'''
 		old_cfg = copy.copy(self.config);
 		self.set_config(config);
@@ -162,7 +162,7 @@ class BlockRobot( Robot ):
 		surf.blit(s, (0,0));
 		pygame.display.update();
 
-
+'''
 if __name__ == '__main__':
 	WIDTH = 800;
 	HEIGHT = 800;
@@ -175,16 +175,17 @@ if __name__ == '__main__':
 	robot = BlockRobot( );
 	startConfig = BlockRobotConfig(100,200, 700, 600);
 	goalConfig = BlockRobotConfig(400,400, 482.5, 332.5);
-	testConfig = BlockRobotConfig(524,852,724,557);
+	testConfig = BlockRobotConfig(311,667,725,427);
 
-	print robot.config_clearance(testConfig);
+	collision_cfg = robot.get_collission_config(testConfig);
 
 	robot.set_config( testConfig );
-	robot.render(DISPLAYSURF, 255);
+	robot.render(DISPLAYSURF, 250);
 	pygame.display.update();
 
-	#robot.set_config( goalConfig );
-	#robot.render(DISPLAYSURF, 250);
-	#pygame.display.update();
+	robot.set_config( collision_cfg );
+	robot.render(DISPLAYSURF, 200);
+	pygame.display.update();
 
 	pygame.image.save(DISPLAYSURF, 'BlockRobot.PNG');
+'''
