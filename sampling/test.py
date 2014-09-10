@@ -7,8 +7,17 @@ sys.path.append('../basics/robotics')
 
 from BlockRobots import *
 from masampling  import *
+from hyper_geometry import *
 
 def main():
+
+	vect = vec([1, 2, 3, -4]);
+	vect2 = vec([1,1,1,1]);
+	print (vect+vect2)
+	print (vect+vect2).l1();
+	print vect.r();
+	return
+
 	WIDTH = 800;
 	HEIGHT = 800;
 
