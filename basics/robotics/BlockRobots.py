@@ -124,7 +124,7 @@ class BlockRobot( Robot ):
 		if self.is_valid_config(config):
 			collision_cfg = self.get_collission_config(config);
 			if mode == 'L2' or mode == 'l2':
-				return min( [self.clearance2wall(config), (collision_cfg-config).r()  * 1.41421356237]);
+				return min( [self.clearance2wall(config), (collision_cfg-config).r()]);
 			elif mode == 'L1' or mode == 'l1':
 				return min( [self.clearance2wall(config), (collision_cfg-config).l1()] );
 		else:

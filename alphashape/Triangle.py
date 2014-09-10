@@ -29,7 +29,7 @@ class Triangle:
 
 		return edges;
 
-	def is_filled(self, surf):
+	def is_filled(self):
 		A = self.spheres[0].center;
 		B = self.spheres[1].center;
 		C = self.spheres[2].center;
@@ -81,8 +81,6 @@ class Triangle:
 		inter_x = (k1*mid1.x - k2*mid2.x + mid2.y - mid1.y) / (k1-k2);
 		inter_y = k1*( inter_x - mid1.x ) + mid1.y;
 		rad_center = v2( inter_x, inter_y );
-
-		pygame.draw.circle( surf, (255,0,255), (int(rad_center.x), int(rad_center.y)), 3 )
 
 		# Determine if the intersection is inside any spheres
 		for sphere in self.spheres:
