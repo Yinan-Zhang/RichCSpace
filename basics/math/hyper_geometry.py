@@ -13,7 +13,7 @@ __author__ = 'Yinan'
 __revision__ = '$Revision$'
 
 
-from math import sqrt, pi, degrees, radians, cos, sin, acos, asin, atan2
+from math import sqrt, pi, degrees, radians, cos, sin, acos, asin, atan2, fabs
 
 
 #========================================================================================
@@ -58,12 +58,18 @@ class vec:
 		return rsq;
 
 	def r( self ):
-		'Return the length of the vector.'
-		return sqrt( self.rsq() );
+		'Return the l2 length of the vector.'
+		rsq = 0.0;
+		for i in range(0, len(self.pos)):
+			rsq += self.pos[i]**2
+		return sqrt(rsq);
 
 	def l1(self):
 		'''return the L1 distance'''
-		return sum(self.pos);
+		sum_ = 0.0;
+		for i in range(0, len(self.pos)):
+			sum_ += fabs(self.pos[i]*1.0)
+		return sum_;
 
 	length = r # alias
 
@@ -174,7 +180,7 @@ class hyper_sphere:
 		'''determine if the point is inside the sphere
 		@param point: (vec) the point'''
 		dist = (point - self.center).r();
-		return dist < point;
+		return dist < self.radius;
 
 	def intersects( self, other ):
 		'''determine if the other sphere is intersecting with self'''

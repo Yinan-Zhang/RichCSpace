@@ -83,37 +83,32 @@ class BlockSamplingHelper( samplinghelper ):
 			raise Exception( 'Please give a BlockRobot instance' );
 		if not isinstance(config, BlockRobotConfig):
 			config = BlockRobotConfig(config[0], config[1], config[2], config[3]);
-
-		#wall_dists = [0] * len(dimensions);
-		#for i in range(0, len(dimensions)):
-		#	wall_dists[i] = min( [math.fabs(config[i]), math.fabs(dimensions[i]-config[i]) ] )
-
-		#return min( [min(wall_dists) ,robot.config_clearance(config, mode)]);
 		return robot.config_clearance(config, mode);
 
-	def maSample(self, robot, config, direction, max_len, dimensions):
+	def maSample(self, robot, config, direction, max_len, dimensions, mode = 'L2'):
 		'''get the medial axis sample along a directon, with max length.
 		@param dimensions: max values of each dimension'''
 		if not self.is_valid_config(robot, config):
-			raise Exception('Has to be a feasible configuration');
+			#raise Exception('Has to be a feasible configuration');
+			return None, None
 		t = 1;
 		last_increase = False;
-		last_dist = self.config_clearance(robot, config, dimensions);
+		last_dist = self.config_clearance(robot, config, dimensions, mode);
 		dists = [last_dist];
 		while True:
 			if t-1 >= max_len:
 				return None, None;
 			temp = config + direction * t
 			#print temp
-			this_dist = self.config_clearance(robot, temp, dimensions); 
+			this_dist = self.config_clearance(robot, temp, dimensions, mode); 
 			dists.append(this_dist);
 			if this_dist <=0 or this_dist-last_dist == 0:
 				break;
 			this_increase = ((this_dist-last_dist)>0);
 			if last_increase and not this_increase:
 				if self.is_valid_config(robot, temp):
-					print '-----------------------------'
-					print dists
+					#print '-----------------------------'
+					#print dists
 					return temp, this_dist;
 				else:
 					return None, None;
@@ -181,13 +176,14 @@ class MedialAxisSampler:
 
 		return dir.normalize();
 
-	def sample_medial_axis(self, randSamples, dimensions):
+	def sample_medial_axis(self, randSamples, dimensions, mode = 'L2'):
 		'''Given a bunch of random samples, find some medial axis samples using them.
 		@param dimensions: max values of each dimension'''
-		length = 40;
+		length = 20;
 		ma_samples = []
 
 		for config in randSamples:
+
 			good = True;
 			for sphere in ma_samples:
 				if sphere.contains(config):
@@ -197,8 +193,8 @@ class MedialAxisSampler:
 				continue;
 
 			rnd_dir = self.random_dir( len(config) );
-			center, clearance = self.helper.maSample(self.robot, config, rnd_dir, length, dimensions);
-			if clearance == None:
+			center, clearance = self.helper.maSample(self.robot, config, rnd_dir, length, dimensions, mode);
+			if clearance == None or clearance <= 5.0:
 				continue;
 			sample = Sample(center, clearance);
 			ma_samples.append(sample);

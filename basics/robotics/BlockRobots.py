@@ -120,11 +120,11 @@ class BlockRobot( Robot ):
 
 	def config_clearance( self, config, mode='L2' ):
 		'''get the clearance of a given configuration without changing current config.
-		@param mode: str 'L1' or 'L2' '''  
+		@param mode: str 'L1' or 'L2' distance '''  
 		if self.is_valid_config(config):
 			collision_cfg = self.get_collission_config(config);
 			if mode == 'L2' or mode == 'l2':
-				return min( [self.clearance2wall(config) / (1.0),(collision_cfg-config).r()]);
+				return min( [self.clearance2wall(config), (collision_cfg-config).r()  * 1.41421356237]);
 			elif mode == 'L1' or mode == 'l1':
 				return min( [self.clearance2wall(config), (collision_cfg-config).l1()] );
 		else:

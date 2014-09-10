@@ -20,7 +20,7 @@ def main():
 	robot = BlockRobot();
 	#startConfig = BlockRobotConfig(100,200, 700, 600);
 	#goalConfig = BlockRobotConfig(400,400, 482.5, 332.5);
-	#testConfig = BlockRobotConfig(400, 400, 460, 500);
+	testConfig = BlockRobotConfig(400, 400, 350, 400);
 
 	helper  = BlockSamplingHelper();
 	sampler = MedialAxisSampler(robot, helper);
@@ -33,7 +33,7 @@ def main():
 		pygame.draw.line( DISPLAYSURF, (0,0,0), point, point, 3 );
 
 	random_configs = sampler.random_configs(4, 2000, dimensions);
-	ma_samples = sampler.sample_medial_axis(random_configs, dimensions);
+	ma_samples = sampler.sample_medial_axis(random_configs, dimensions, 'L1');
 	sampler.save_data(ma_samples, 'BlockRobotMASamples.txt');
 
 	print 'Get {0} medial axis samples'.format(len(ma_samples));
@@ -44,6 +44,9 @@ def main():
 	for sample in ma_samples:
 		point = (int(sample.center[2]), int(sample.center[3]));
 		pygame.draw.circle( DISPLAYSURF, (0,250,0), point, int(sample.radius), 2 );
+
+	#robot.set_config(testConfig);
+	#robot.render(DISPLAYSURF, 200);
 
 	pygame.image.save(DISPLAYSURF, 'BlockRobot.PNG');
 
