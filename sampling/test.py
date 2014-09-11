@@ -11,13 +11,6 @@ from hyper_geometry import *
 
 def main():
 
-	vect = vec([1, 2, 3, -4]);
-	vect2 = vec([1,1,1,1]);
-	print (vect+vect2)
-	print (vect+vect2).l1();
-	print vect.r();
-	return
-
 	WIDTH = 800;
 	HEIGHT = 800;
 
@@ -42,7 +35,7 @@ def main():
 		pygame.draw.line( DISPLAYSURF, (0,0,0), point, point, 3 );
 
 	random_configs = sampler.random_configs(4, 2000, dimensions);
-	ma_samples = sampler.sample_medial_axis(random_configs, dimensions, 'L1');
+	ma_samples = sampler.sample_medial_axis(random_configs, dimensions, 'L2');
 	sampler.save_data(ma_samples, 'BlockRobotMASamples.txt');
 
 	print 'Get {0} medial axis samples'.format(len(ma_samples));

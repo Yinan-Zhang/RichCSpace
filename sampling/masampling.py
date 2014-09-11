@@ -102,7 +102,7 @@ class BlockSamplingHelper( samplinghelper ):
 			#print temp
 			this_dist = self.config_clearance(robot, temp, dimensions, mode); 
 			dists.append(this_dist);
-			if this_dist <=0 or this_dist-last_dist == 0:
+			if (last_dist > 0 and this_dist <=0):
 				break;
 			this_increase = ((this_dist-last_dist)>0);
 			if last_increase and not this_increase:
@@ -179,11 +179,10 @@ class MedialAxisSampler:
 	def sample_medial_axis(self, randSamples, dimensions, mode = 'L2'):
 		'''Given a bunch of random samples, find some medial axis samples using them.
 		@param dimensions: max values of each dimension'''
-		length = 20;
+		length = 30;
 		ma_samples = []
 
 		for config in randSamples:
-
 			good = True;
 			for sphere in ma_samples:
 				if sphere.contains(config):

@@ -7,12 +7,20 @@ from geometry import v2
 from hyper_geometry import *
 from hyper_triangle import *
 
+code = 0; ## code for each triangle as a reference 
+
 class Triangle:
 	def __init__(self, sphere1, sphere2, sphere3):
 		'''sphere1~3 are hyper_spheres '''
 		self.vertices = [sphere1.center, sphere2.center, sphere3.center];
 		self.spheres = [sphere1, sphere2, sphere3];
 		self.valid_triangle = True;
+		global code;
+		self.code = code;
+		code += 1;
+
+	def __hash__( self ):
+    return hash(self.code);
 
 	def valid_edges(self):
 		'''if an edge is between two intersecting spheres, it's a valid edge'''
