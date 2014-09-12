@@ -20,7 +20,10 @@ class Triangle:
 		code += 1;
 
 	def __hash__( self ):
-    return hash(self.code);
+		return hash(self.code);
+
+	def edges(self):
+		return [(self.spheres[0],self.spheres[1]),(self.spheres[1],self.spheres[0]), (self.spheres[0],self.spheres[2]), (self.spheres[2],self.spheres[0]), (self.spheres[1],self.spheres[2]), (self.spheres[2],self.spheres[1]) ]
 
 	def valid_edges(self):
 		'''if an edge is between two intersecting spheres, it's a valid edge'''
