@@ -85,18 +85,20 @@ class Nerve:
 		return len(edge_set) - len(vertices) + 1 - matrix_rank(matrix);
 
 
-	def contract(self, spheres, triangle_set, graph_dict, edge_tri_dict):
+	def contract(self, triangle_set, edge_tri_dict):
+		'''Contract a set of triangles to several sets of triangles, such that each set has first betti number of 0'''
 		visited_vertices = [];
 		dict_set = []; 	# we use a dictionary to store a set of triangles;
 						# The set of dictionaries is the set of contracted triangles.
 	    used = {};
 		for triangle in triangle_set:
 			if not used.has_key(triangle):
-				component = self.contract(triangle, triangle_set, used, graph_dict, edge_tri_dict)
+				component = self.contract(triangle, used, edge_tri_dict)
 				dict_set.append(component)
 		return dict_set;
 
-	def contract(self, triangle, triangle_set, used, graph_dict, edge_tri_dict):
+	def contract(self, triangle, used, edge_tri_dict):
+		'''Contract a triangle and its neighbor triangles'''
 		neighbors = self.find_neighbor(triangle, edge_tri_dict)
 		component[triangle] = 1
 		used[triangle] = True
@@ -116,6 +118,7 @@ class Nerve:
 		return component;
 
 	def is_useful(self, component, triangle, edge_tri_dict):
+		'''determine if a triangle can be added to current component without increasing 1st betti number.'''
 		component[triangle] = 1
 		edge_set = component_edges(component);
 		if self.betti_number(component, edge_set, edge_tri_dict) == 0:
@@ -125,6 +128,7 @@ class Nerve:
 		return False;
 
 	def component_edges(self, component):
+		'''Get all edges of current component.'''
 		edge_set = {}
 		for triangle in component:
 			for edge in triangle.edges:
@@ -134,13 +138,14 @@ class Nerve:
 		return edge_set.keys();
 
 	def find_neighbor(self, triangle, edge_tri_dict):
+		'''Find neighbor triangles of a given triangle'''
 		neighbors = {};
+		edges = triangle.edges();
 		for edge in edges:
 			if edge_tri_dict.has_key(edge):
 				for tri in edge_tri_dict[edge]:
 					if not neighbors.has_key(tri):
 						neighbors[tri] = 1;
 		return neighbors
-		pass;
 
 	
