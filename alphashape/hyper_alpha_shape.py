@@ -61,6 +61,46 @@ class Nerve:
 
 		return edges, triangle_set, graph_dict, edge_tri_dict;
 
+	def build_topology_roadmap(self, sphere_set, triangle_set, edge_tri_dict, graph_dict):
+		'''Build the topology roadmap of C-space'''
+
+		def add2dict(dictionary, key, content):
+			if not dictionary.has_key(key):
+				dictionary[key] = [];
+			connections = self.connections_with( key, content, graph_dict );
+			for i in range(0, connections):
+				dictionary[key].append( content );
+
+		components = self.contract(triangle_set, edge_tri_dict);
+		sphere_comp_dict = {}
+		new_graph = {}
+		for sphere in graph_dict.keys():
+			containing_component = self.containing_component(sphere, components):
+			if containing_component is not None:
+				sphere_comp_dict[sphere] = containing_component;
+
+		for sphere in graph_dict.keys():
+			if not sphere_comp_dict.has_key(sphere):   # This is a single sphere not in any component
+				new_graph[sphere] = [];
+				for element in graph_dict[sphere]:	   # Loop every element that connects with current sphere
+					if not sphere_comp_dict.has_key(element):
+						add2dict(new_graph, sphere,	element)
+					elif not sphere_comp_dict[element] in new_graph[sphere]:
+						#new_graph[sphere].append(sphere_comp_dict[element]);
+						add2dict(new_graph, sphere,	sphere_comp_dict[element]);
+			else:										# the sphere is in a component
+				if not new_graph.has_key(sphere_comp_dict[sphere]):
+					new_graph[sphere_comp_dict[sphere]] = [];
+				for element in graph_dict[sphere]:
+					if not sphere_comp_dict.has_key(element)：
+						#new_graph[sphere_comp_dict[sphere]].append(element);
+						add2dict(new_graph, sphere_comp_dict[sphere], element)
+					elif not sphere_comp_dict[element] in new_graph[sphere_comp_dict[sphere]]:
+						#new_graph[sphere_comp_dict[sphere]].append(sphere_comp_dict[element]);
+						add2dict(new_graph, sphere_comp_dict[sphere], sphere_comp_dict[element])
+		return new_graph;
+
+
 	def betti_number( self, triangle_set, edge_set, edge_tri_dict ):
 		'''Given some edges and triangles between edges, compute the first betti number.
 		Needs to make sure there is no (1,2), (2,1) kind of situations in the edge_set'''
@@ -83,7 +123,6 @@ class Nerve:
 					matrix[i, j] = 1;
 
 		return len(edge_set) - len(vertices) + 1 - matrix_rank(matrix);
-
 
 	def contract(self, triangle_set, edge_tri_dict):
 		'''Contract a set of triangles to several sets of triangles, such that each set has first betti number of 0'''
@@ -127,10 +166,20 @@ class Nerve:
 		del component[triangle]
 		return False;
 
+	def component_spheres(self, component):
+		'''Get all spheres in a component'''
+		spheres = [];
+		for triangle in component.keys():
+			for sphere in triangle.spheres:
+				if not sphere in spheres:
+					spheres.append(sphere):
+		return spheres;
+
+
 	def component_edges(self, component):
 		'''Get all edges of current component.'''
 		edge_set = {}
-		for triangle in component:
+		for triangle in component.keys():
 			for edge in triangle.edges:
 				(a, b) = edge
 				if not edge_set.has_key((a, b)) and not edge_set.has_key((b, a)):
@@ -147,5 +196,40 @@ class Nerve:
 					if not neighbors.has_key(tri):
 						neighbors[tri] = 1;
 		return neighbors
+
+	def component_contains( self, component, sphere ):
+		'''determine if a component contains a sphere'''
+		for triangle in component.keys():
+			if sphere in triangle.spheres:
+				return True;
+		return False;
+
+	def containing_component(self, sphere, components):
+		'''Given a set of components, return the component that contains current sphere'''
+		for component in components:
+			if self.component_contains(component, sphere):
+				return component;
+		return None;
+
+	def connections_between( self, elem, component, graph_dict ):
+		'''return the number of connections between the element and the component'''
+		if isinstance(elem, sphere):	# a single sphere
+			result = 0;
+			neighbors = graph_dict[elem];
+			for neighbor in neighbors:
+				if self.component_contains(component, neighbor):
+					result += 1;
+			return result;
+			pass;
+		elif isinstance(elem, dict):	# a set of triangles
+			spheres = self.component_spheres(elem);
+			result = 0;
+			for sphere in spheres:
+				neighbors = graph_dict[elem];
+				for neighbor in neighbors:
+					if self.component_contains(component, sphere):
+						result += 1;
+			return result;
+
 
 	
