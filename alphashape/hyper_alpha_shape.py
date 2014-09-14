@@ -13,7 +13,8 @@ sys.path.append('../basics/math')
 from numpy.linalg import matrix_rank
 
 from hyper_geometry import *
-from Triangle import *
+from l1_geometry 	import *
+from Triangle 		import *
 
 class Nerve:
 	def __init__(self):

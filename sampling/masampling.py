@@ -9,10 +9,12 @@ from hyper_geometry import *
 from configuration 	import *
 from robot 			import *
 from BlockRobots 	import *
+from l1_geometry 	import *
 
 class Sample(hyper_sphere):
 	'''A sample is a configuration with clearance. '''
 	def __init__( self, center, radius ):
+		#l1_sphere.__init__(self,center, radius);
 		hyper_sphere.__init__(self,center, radius);
 		self.rnd_cfgs = []; 					# Random configurations 
 		self.bnd_cfgs = [];						# boundary configurations

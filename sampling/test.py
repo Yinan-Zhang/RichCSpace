@@ -29,14 +29,14 @@ def main():
 
 	dimensions = [ 800 ] * 4;
 	
-	random_bad_configs = sampler.random_invalid_configs( 4, 5000, dimensions)
-	for config in random_bad_configs:
-		point = (int(config[2]), int(config[3]));
-		pygame.draw.line( DISPLAYSURF, (0,0,0), point, point, 3 );
+	#random_bad_configs = sampler.random_invalid_configs( 4, 5000, dimensions)
+	#for config in random_bad_configs:
+	#	point = (int(config[2]), int(config[3]));
+	#	pygame.draw.line( DISPLAYSURF, (0,0,0), point, point, 3 );
 
-	random_configs = sampler.random_configs(4, 2000, dimensions);
-	ma_samples = sampler.sample_medial_axis(random_configs, dimensions, 'L2');
-	sampler.save_data(ma_samples, 'BlockRobotMASamples.txt');
+	random_configs = sampler.random_configs(4, 6000, dimensions);
+	ma_samples = sampler.sample_medial_axis(random_configs, dimensions, 'L1');
+	sampler.save_data(ma_samples, 'BlockRobotMASamplesL1.txt');
 
 	print 'Get {0} medial axis samples'.format(len(ma_samples));
 
@@ -50,7 +50,7 @@ def main():
 	#robot.set_config(testConfig);
 	#robot.render(DISPLAYSURF, 200);
 
-	pygame.image.save(DISPLAYSURF, 'BlockRobot.PNG');
+	pygame.image.save(DISPLAYSURF, 'BlockRobotL1.PNG');
 
 if __name__ == '__main__':
 	main();
