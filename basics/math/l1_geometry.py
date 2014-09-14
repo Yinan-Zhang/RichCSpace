@@ -9,6 +9,8 @@ class l1_sphere:
 		''' Open high dimensional sphere
 		@param center: (vec) the center of the sphere
 		@param radius: (number) the radius of the sphere'''
+		if isinstance(center, list):
+			center = vec(center);
 		self.center = center;
 		self.radius = radius;
 

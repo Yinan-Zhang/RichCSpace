@@ -27,7 +27,7 @@ from math import sqrt, pi, degrees, radians, cos, sin, acos, asin, atan2
 
 __all__ = [
   'pi', 'degrees', # re-exported from math
-  'angle', 'v2', 'v3', 'line_segment', 'circle', 'sphere', 'path',
+  'angle', 'v2', 'v3', 'line_segment', 'circle', 'sphere2d', 'path'
 ]
  
 
@@ -531,7 +531,7 @@ class circle( object ):
 #========================================================================================
 # Sphere
 #========================================================================================
-class sphere(object):
+class sphere2d(object):
   'Represents a sphere in the plane'
   def __init__(self, center, radius):
     '''Constructor of a sphere.

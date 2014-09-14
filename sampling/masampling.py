@@ -11,18 +11,36 @@ from robot 			import *
 from BlockRobots 	import *
 from l1_geometry 	import *
 
-class Sample(hyper_sphere):
+class Sample():
 	'''A sample is a configuration with clearance. '''
-	def __init__( self, center, radius ):
-		#l1_sphere.__init__(self,center, radius);
-		hyper_sphere.__init__(self,center, radius);
+	def __init__( self, center, radius, mode ):
+		self.mode = mode;
+		if mode == 'L1' or mode == 'l1':
+			self.sphere = l1_sphere(center, radius);
+		elif mode == 'L2' or mode == 'l2':
+			self.sphere = hyper_sphere(center, radius);
+		#hyper_sphere.__init__(self,center, radius);
 		self.rnd_cfgs = []; 					# Random configurations 
 		self.bnd_cfgs = [];						# boundary configurations
 		self.closed = False;
+		self.center = self.sphere.center;
+		self.radius = self.sphere.radius;
+
+	def contains( self, point ):
+		'''determine if the point is inside the sphere
+		@param point: (vec) the point'''
+		return self.sphere.contains(point);
+
+	def intersects( self, other ):
+		'''determine if the other sphere is intersecting with self'''
+		return self.sphere.intersects(other.sphere);
 
 	def distance(self, point):
 		'''distance from a point to the boundary of the sphere'''
-		centerdist = (point - self.center).r();
+		if self.mode == 'L2' or self.mode == 'l2':
+			centerdist = (point - self.center).r();
+		elif self.mode == 'L1' or self.mode == 'l1':
+			centerdist = (point - self.center).l1()
 		return centerdist - self.radius;
 
 	def add(self, point):
@@ -185,6 +203,7 @@ class MedialAxisSampler:
 		ma_samples = []
 
 		for config in randSamples:
+			'''
 			good = True;
 			for sphere in ma_samples:
 				if sphere.contains(config):
@@ -192,13 +211,20 @@ class MedialAxisSampler:
 					break;
 			if not good:
 				continue;
-
+			'''
 			rnd_dir = self.random_dir( len(config) );
 			center, clearance = self.helper.maSample(self.robot, config, rnd_dir, length, dimensions, mode);
 			if clearance == None or clearance <= 5.0:
 				continue;
-			sample = Sample(center, clearance);
-			ma_samples.append(sample);
+			sample = Sample(center, clearance, mode,);
+			good = True;
+			for sphere in ma_samples:
+				if sphere.contains(sample.center):
+					good = False;
+					break;
+
+			if good:
+				ma_samples.append(sample);
 
 		return ma_samples;
 

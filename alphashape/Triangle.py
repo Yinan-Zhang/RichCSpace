@@ -3,9 +3,10 @@ import numpy
 
 sys.path.append('../basics/math')
 
-from geometry import v2
+from geometry import v2, sphere2d
 from hyper_geometry import *
-from hyper_triangle import *
+from l1_geometry import *
+#from hyper_triangle import *
 
 code = 0; ## code for each triangle as a reference 
 
@@ -40,7 +41,16 @@ class Triangle:
 
 		return edges;
 
+	def is_filled_l1(self):
+		'''determin if filled in l1 metric'''
+		if self.spheres[0].intersects(self.spheres[1]) and self.spheres[0].intersects(self.spheres[2]) and self.spheres[1].intersects(self.spheres[2]):
+			return True;
+		return False;	
+
 	def is_filled(self):
+		if isinstance(self.spheres[0], l1_sphere ):
+			return self.is_filled_l1();
+
 		A = self.spheres[0].center;
 		B = self.spheres[1].center;
 		C = self.spheres[2].center;
@@ -51,13 +61,14 @@ class Triangle:
 		cos_a = (B-A).dot(C-A) / ( l1 * l2 );
 		sin_a = math.sqrt( 1 - cos_a**2 );
 
-		A = v2(0.0, 0.0);							r_a = ball1.radius;
-		B = v2(l1, 0);								r_b = ball2.radius;
-		C = v2(l2*cos_a, l2*sin_a);					r_c = ball3.radius;
+		A = v2(0.0, 0.0);							r_a = self.spheres[0].radius;
+		B = v2(l1, 0);								r_b = self.spheres[1].radius;
+		C = v2(l2*cos_a, l2*sin_a);					r_c = self.spheres[2].radius;
 
-		ball1 = sphere( A, self.spheres[0].radius );
-		ball2 = sphere( B, self.spheres[1].radius );
-		ball3 = sphere( C, self.spheres[2].radius );
+		ball1 = sphere2d( A, self.spheres[0].radius );
+		ball2 = sphere2d( B, self.spheres[1].radius );
+		ball3 = sphere2d( C, self.spheres[2].radius );
+
 
 		# 1. First Radical Axis
 		mid1 = A + (B-A).normalize() * ( l1**2 + r_a**2 - r_b**2 ) / (2 * l1); 
@@ -94,8 +105,9 @@ class Triangle:
 		rad_center = v2( inter_x, inter_y );
 
 		# Determine if the intersection is inside any spheres
-		for sphere in self.spheres:
-			if sphere.contains( rad_center ):
-				return True
-
+		#for sphere in self.spheres:
+		#	if sphere.contains( rad_center ):
+		#		return True
+		if ball1.contains(rad_center) or ball2.contains(rad_center) or ball3.contains(rad_center):
+			return True;
 		return False;

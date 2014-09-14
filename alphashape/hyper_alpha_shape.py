@@ -41,7 +41,7 @@ class Nerve:
 			for j in range(0, len(spheres)):
 				sphere2 = spheres[j];
 				if not sphere1.intersects(sphere2) or sphere1 == sphere2:
-					break;
+					continue;
 				if not (sphere1, sphere2) in edges:
 					edges.append( (sphere1, sphere2) );
 					self.__add2dict__(sphere1, sphere2, graph_dict);
@@ -60,23 +60,37 @@ class Nerve:
 							self.__add2dict__((sphere2,sphere3), triangle, edge_tri_dict);
 							self.__add2dict__((sphere3,sphere2), triangle, edge_tri_dict);
 
+		for tri1 in triangle_set:
+			for tri2 in triangle_set:
+				if tri1 == tri2:
+					continue;
+				if tri1.spheres[0] == tri2.spheres[0] or tri1.spheres[0] == tri2.spheres[1] or tri1.spheres[0] == tri2.spheres[2]:
+					if tri1.spheres[1] == tri2.spheres[0] or tri1.spheres[1] == tri2.spheres[1] or tri1.spheres[1] == tri2.spheres[2]:
+						if tri1.spheres[2] == tri2.spheres[0] or tri1.spheres[2] == tri2.spheres[1] or tri1.spheres[2] == tri2.spheres[2]:
+							triangle_set.remove(tri2);
+
 		return edges, triangle_set, graph_dict, edge_tri_dict;
 
-	def build_topology_roadmap(self, sphere_set, triangle_set, edge_tri_dict, graph_dict):
-		'''Build the topology roadmap of C-space'''
+	def build_topology_roadmap(self, components, graph_dict):
+		'''Build the topology roadmap of C-space.
+		@param components: contracted triangles.
+		@param graph_dict: relation between each sphere'''
 
 		def add2dict(dictionary, key, content):
 			if not dictionary.has_key(key):
 				dictionary[key] = [];
-			connections = self.connections_with( key, content, graph_dict );
+			if isinstance(content, dict ):
+				connections = self.connections_between( key, content, graph_dict );
+			elif isinstance(content, hyper_sphere):
+				connections = 1;
 			for i in range(0, connections):
 				dictionary[key].append( content );
 
-		components = self.contract(triangle_set, edge_tri_dict);
+		#components = self.contract(triangle_set, edge_tri_dict);
 		sphere_comp_dict = {}
 		new_graph = {}
 		for sphere in graph_dict.keys():
-			containing_component = self.containing_component(sphere, components):
+			containing_component = self.containing_component(sphere, components);
 			if containing_component is not None:
 				sphere_comp_dict[sphere] = containing_component;
 
@@ -90,10 +104,12 @@ class Nerve:
 						#new_graph[sphere].append(sphere_comp_dict[element]);
 						add2dict(new_graph, sphere,	sphere_comp_dict[element]);
 			else:										# the sphere is in a component
+				component = sphere_comp_dict[sphere];
+				print component;
 				if not new_graph.has_key(sphere_comp_dict[sphere]):
 					new_graph[sphere_comp_dict[sphere]] = [];
 				for element in graph_dict[sphere]:
-					if not sphere_comp_dict.has_key(element)：
+					if not sphere_comp_dict.has_key(element):
 						#new_graph[sphere_comp_dict[sphere]].append(element);
 						add2dict(new_graph, sphere_comp_dict[sphere], element)
 					elif not sphere_comp_dict[element] in new_graph[sphere_comp_dict[sphere]]:
@@ -115,12 +131,12 @@ class Nerve:
 			triangles = edge_tri_dict[edge];		# 
 			for triangle in triangles:
 				if triangle not in added_triangles:
-					added_triangles[triangle];
+					added_triangles[triangle] = 1;
 
 		matrix = numpy.zeros((len(edge_set), len(added_triangles.keys()) ), dtype='int32');
 		for i in range(0, len(edge_set)):
-			for j in range(0, len(added_triangles.keys()):
-				if added_triangles[j] in edge_tri_dict[edge]:
+			for j in range(0, len(added_triangles.keys())):
+				if added_triangles.keys()[j] in edge_tri_dict[edge_set[i]]:
 					matrix[i, j] = 1;
 
 		return len(edge_set) - len(vertices) + 1 - matrix_rank(matrix);
@@ -130,16 +146,17 @@ class Nerve:
 		visited_vertices = [];
 		dict_set = []; 	# we use a dictionary to store a set of triangles;
 						# The set of dictionaries is the set of contracted triangles.
-	    used = {};
+		used = {};
 		for triangle in triangle_set:
 			if not used.has_key(triangle):
-				component = self.contract(triangle, used, edge_tri_dict)
+				component = self.contract_node(triangle, used, edge_tri_dict)
 				dict_set.append(component)
 		return dict_set;
 
-	def contract(self, triangle, used, edge_tri_dict):
+	def contract_node(self, triangle, used, edge_tri_dict):
 		'''Contract a triangle and its neighbor triangles'''
 		neighbors = self.find_neighbor(triangle, edge_tri_dict)
+		component = {};
 		component[triangle] = 1
 		used[triangle] = True
 		found = True;
@@ -160,7 +177,7 @@ class Nerve:
 	def is_useful(self, component, triangle, edge_tri_dict):
 		'''determine if a triangle can be added to current component without increasing 1st betti number.'''
 		component[triangle] = 1
-		edge_set = component_edges(component);
+		edge_set = self.component_edges(component);
 		if self.betti_number(component, edge_set, edge_tri_dict) == 0:
 			del component[triangle]
 			return True;
@@ -173,7 +190,7 @@ class Nerve:
 		for triangle in component.keys():
 			for sphere in triangle.spheres:
 				if not sphere in spheres:
-					spheres.append(sphere):
+					spheres.append(sphere);
 		return spheres;
 
 
@@ -181,7 +198,7 @@ class Nerve:
 		'''Get all edges of current component.'''
 		edge_set = {}
 		for triangle in component.keys():
-			for edge in triangle.edges:
+			for edge in triangle.edges():
 				(a, b) = edge
 				if not edge_set.has_key((a, b)) and not edge_set.has_key((b, a)):
 					edge_set[(a, b)] = 1
@@ -214,7 +231,7 @@ class Nerve:
 
 	def connections_between( self, elem, component, graph_dict ):
 		'''return the number of connections between the element and the component'''
-		if isinstance(elem, sphere):	# a single sphere
+		if isinstance(elem, hyper_sphere):	# a single sphere
 			result = 0;
 			neighbors = graph_dict[elem];
 			for neighbor in neighbors:
