@@ -62,6 +62,19 @@ class Graph:
 		vert_num = len(self.graphdict.keys());
 		return edge_num - vert_num + 1;
 
+	def find_node( self, config ):
+		'''given a config in 4D, find the containing node in the graph'''
+		for node in self.graphdict.keys():
+			if isinstance(node, hyper_sphere):
+				if node.contains(config):
+					return node;
+				pass;
+			elif isinstance(node, Component):
+				for sphere in node.spheres():
+					if sphere.contains(config):
+						return node;
+		return None;
+
 	def find_all_paths(self, start, end, path=[]):
 		path = path + [start];
 		if start == end:
@@ -71,7 +84,7 @@ class Graph:
 		paths = [];
 		for neighbor in self.graphdict[start]:
 			if neighbor not in path:
-				newpaths = self.find_all_paths( node, end, path);
+				newpaths = self.find_all_paths( neighbor, end, path);
 				for newpath in newpaths:
 					paths.append(newpath);
 		return paths;

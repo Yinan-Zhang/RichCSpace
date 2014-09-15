@@ -199,7 +199,7 @@ class MedialAxisSampler:
 	def sample_medial_axis(self, randSamples, dimensions, mode = 'L2'):
 		'''Given a bunch of random samples, find some medial axis samples using them.
 		@param dimensions: max values of each dimension'''
-		length = 30;
+		length = 40;
 		ma_samples = []
 
 		for config in randSamples:
@@ -214,7 +214,7 @@ class MedialAxisSampler:
 			'''
 			rnd_dir = self.random_dir( len(config) );
 			center, clearance = self.helper.maSample(self.robot, config, rnd_dir, length, dimensions, mode);
-			if clearance == None or clearance <= 5.0:
+			if clearance == None or clearance <= 2.0:
 				continue;
 			sample = Sample(center, clearance, mode,);
 			good = True;

@@ -68,8 +68,8 @@ class Block(Polygon):
 class BlockRobot( Robot ):
 	def __init__(self, unit_len=15):
 		self.unit_size = unit_len;
-		#pntlist = [ v2(0,0), v2(4,0), v2(4,-3), v2(3,-3), v2(3,-1), v2(1,-1), v2(1,-7), v2(4,-7), v2(4,-8), v2(0,-8) ];
-		pntlist = [ v2( 0,0 ), v2( 4,0 ), v2( 4,-4 ), v2( 0, -4 ) ];
+		pntlist = [ v2(0,0), v2(6,0), v2(6,-3), v2(5,-3), v2(5,-1), v2(1,-1), v2(1,-7), v2(6,-7), v2(6,-8), v2(0,-8) ];
+		#pntlist = [ v2( 0,0 ), v2( 4,0 ), v2( 4,-4 ), v2( 0, -4 ) ];
 		for point in pntlist:
 			point *= self.unit_size;
 

@@ -92,7 +92,7 @@ def main():
 	#draw_triangles(DISPLAYSURF, triangle_set);
 	
 	components = alphashape.contract(triangle_set, edge_tri_dict);
-	print len(components)
+	#print len(components)
 	i = 1;
 	for component in components:
 		draw_triangles(DISPLAYSURF, component, (0,50 * i, 50 * i));
@@ -101,12 +101,39 @@ def main():
 
 	rmp_graph_dict = alphashape.build_topology_roadmap(components,graph_dict);
 	
-	print len(rmp_graph_dict.keys())
+	#print len(rmp_graph_dict.keys())
 
 	draw_topology_roadmap(DISPLAYSURF, rmp_graph_dict)
 	
 
-	#graph = hyper_graph(new_graph_dict);
+	graph = Graph(rmp_graph_dict);
+
+	start = vec([400,400, 100, 400]);
+	end   = vec([400, 400, 700, 400]);
+
+	start_node = graph.find_node(start);
+	end_node   = graph.find_node(end);
+
+	print start_node;
+	print end_node
+
+	paths = graph.find_all_paths(start_node, end_node);
+	print len(paths);
+	i = 0;
+	for path in paths:
+		i += 1
+		print '================'
+		for node in path:
+			if isinstance(node, hyper_sphere):
+				point = ( int(node.center[2]), int(node.center[3]) )
+				print point
+				pygame.draw.circle(DISPLAYSURF, (70*i,0,0), point, 10 );
+			elif isinstance(node, Component):
+				center = component_center(node);
+				point = ( int(center[2]), int(center[3]) );
+				print point
+				pygame.draw.circle(DISPLAYSURF, (70*i,0,0), point, 10 );
+
 
 	pygame.image.save(DISPLAYSURF, 'roadmap.PNG');
 
