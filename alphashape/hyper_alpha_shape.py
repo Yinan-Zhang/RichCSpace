@@ -16,6 +16,27 @@ from hyper_geometry import *
 from l1_geometry 	import *
 from Triangle 		import *
 
+class Component:
+	def __init__(self, comp_dict):
+		self.dictionary = comp_dict;
+
+	def contains(self, sphere):
+		for triangle in self.dictionary.keys():
+			if sphere in triangle.spheres:
+				return True;
+		return False;
+
+	def spheres(self):
+		'''get all spheres in the component'''
+		spheres = {};
+		for tri in self.dictionary.keys():
+			for sphere in tri.spheres:
+				if not spheres.has_key(sphere):
+					spheres[sphere] = 1;
+
+		return spheres.keys();
+
+
 class Nerve:
 	def __init__(self):
 		pass;
@@ -73,48 +94,52 @@ class Nerve:
 
 	def build_topology_roadmap(self, components, graph_dict):
 		'''Build the topology roadmap of C-space.
-		@param components: contracted triangles.
+		@param components: contracted triangles (dictionaries).
 		@param graph_dict: relation between each sphere'''
 
 		def add2dict(dictionary, key, content):
-			if not dictionary.has_key(key):
-				dictionary[key] = [];
-			if isinstance(content, dict ):
-				connections = self.connections_between( key, content, graph_dict );
-			elif isinstance(content, hyper_sphere):
-				connections = 1;
+			connections = self.connections_between(key, content, graph_dict);
 			for i in range(0, connections):
 				dictionary[key].append( content );
 
 		#components = self.contract(triangle_set, edge_tri_dict);
+		new_comps = [];
+		for component in components:
+			new_comps.append(Component(component));
+
 		sphere_comp_dict = {}
 		new_graph = {}
 		for sphere in graph_dict.keys():
-			containing_component = self.containing_component(sphere, components);
+			containing_component = self.containing_component(sphere, new_comps);
 			if containing_component is not None:
 				sphere_comp_dict[sphere] = containing_component;
 
 		for sphere in graph_dict.keys():
 			if not sphere_comp_dict.has_key(sphere):   # This is a single sphere not in any component
 				new_graph[sphere] = [];
-				for element in graph_dict[sphere]:	   # Loop every element that connects with current sphere
-					if not sphere_comp_dict.has_key(element):
-						add2dict(new_graph, sphere,	element)
-					elif not sphere_comp_dict[element] in new_graph[sphere]:
-						#new_graph[sphere].append(sphere_comp_dict[element]);
-						add2dict(new_graph, sphere,	sphere_comp_dict[element]);
-			else:										# the sphere is in a component
-				component = sphere_comp_dict[sphere];
-				print component;
-				if not new_graph.has_key(sphere_comp_dict[sphere]):
-					new_graph[sphere_comp_dict[sphere]] = [];
-				for element in graph_dict[sphere]:
-					if not sphere_comp_dict.has_key(element):
+				for neighbor in graph_dict[sphere]:	   # Loop every neighbor that connects with current sphere
+					if not sphere_comp_dict.has_key(neighbor):
+						#length = (v2(sphere.center[2], sphere.center[3])-v2(neighbor.center[2], neighbor.center[3])).r();
+						#print sphere.center[2], sphere.center[3], neighbor.center[2], neighbor.center[3], length;
+						add2dict(new_graph, sphere,	neighbor)
+					elif not sphere_comp_dict[neighbor] in new_graph[sphere]:
+						#new_graph[sphere].append(sphere_comp_dict[neighbor]);
+						add2dict(new_graph, sphere,	sphere_comp_dict[neighbor]);
+			elif( not new_graph.has_key(sphere_comp_dict[sphere]) ):# the sphere is in a component
+				component = sphere_comp_dict[sphere]
+				if not new_graph.has_key(component):
+					new_graph[component] = [];
+				neighbors = self.component_neighbors(component, graph_dict)
+				for neighbor in neighbors:
+					if not sphere_comp_dict.has_key(neighbor):
 						#new_graph[sphere_comp_dict[sphere]].append(element);
-						add2dict(new_graph, sphere_comp_dict[sphere], element)
-					elif not sphere_comp_dict[element] in new_graph[sphere_comp_dict[sphere]]:
+						print "Comp <-> sphere"
+						add2dict(new_graph, component, neighbor)
+					elif not sphere_comp_dict[neighbor] in new_graph[component] and sphere_comp_dict[neighbor] != component:
 						#new_graph[sphere_comp_dict[sphere]].append(sphere_comp_dict[element]);
-						add2dict(new_graph, sphere_comp_dict[sphere], sphere_comp_dict[element])
+						print "Comp <-> Comp"
+						print component, sphere_comp_dict[neighbor]
+						add2dict(new_graph, component, sphere_comp_dict[neighbor])
 		return new_graph;
 
 
@@ -184,16 +209,6 @@ class Nerve:
 		del component[triangle]
 		return False;
 
-	def component_spheres(self, component):
-		'''Get all spheres in a component'''
-		spheres = [];
-		for triangle in component.keys():
-			for sphere in triangle.spheres:
-				if not sphere in spheres:
-					spheres.append(sphere);
-		return spheres;
-
-
 	def component_edges(self, component):
 		'''Get all edges of current component.'''
 		edge_set = {}
@@ -215,39 +230,44 @@ class Nerve:
 						neighbors[tri] = 1;
 		return neighbors
 
-	def component_contains( self, component, sphere ):
-		'''determine if a component contains a sphere'''
-		for triangle in component.keys():
-			if sphere in triangle.spheres:
-				return True;
-		return False;
+	def component_neighbors(self, component, graph_dict):
+		'''get neighbors of a component'''
+		neighbors = {};
+		for sphere in component.spheres():
+			for neighbor in graph_dict[sphere]:
+				if not neighbors.has_key(neighbor):
+					neighbors[neighbor] = 1;
+		return neighbors.keys();
 
 	def containing_component(self, sphere, components):
 		'''Given a set of components, return the component that contains current sphere'''
 		for component in components:
-			if self.component_contains(component, sphere):
+			if component.contains(sphere):
 				return component;
 		return None;
 
-	def connections_between( self, elem, component, graph_dict ):
-		'''return the number of connections between the element and the component'''
-		if isinstance(elem, hyper_sphere):	# a single sphere
-			result = 0;
-			neighbors = graph_dict[elem];
-			for neighbor in neighbors:
-				if self.component_contains(component, neighbor):
-					result += 1;
-			return result;
-			pass;
-		elif isinstance(elem, dict):	# a set of triangles
-			spheres = self.component_spheres(elem);
-			result = 0;
+	def connections_between( self, elem1, elem2, graph_dict ):
+		'''return the number of connections between the elem1 and the elem2'''
+
+		if isinstance(elem1, hyper_sphere) and isinstance(elem2, hyper_sphere):
+			return 1;
+		elif isinstance(elem1, hyper_sphere) and isinstance(elem2, Component):
+			conn = 0;
+			for neighbor in graph_dict[elem1]:
+				if elem2.contains(neighbor):
+					conn += 1;
+			return conn;
+		elif isinstance(elem1, Component) and isinstance(elem2, hyper_sphere):
+			conn = 0;
+			for neighbor in graph_dict[elem2]:
+				if elem1.contains(neighbor):
+					conn += 1;
+			return conn;
+		elif isinstance(elem1, Component) and isinstance(elem2, Component):
+			spheres = elem1.spheres();
+			conn = 1;
 			for sphere in spheres:
-				neighbors = graph_dict[elem];
-				for neighbor in neighbors:
-					if self.component_contains(component, sphere):
-						result += 1;
-			return result;
-
-
-	
+				for neighbor in graph_dict[sphere]:
+					if elem2.contains(neighbor):
+						conn += 1;
+			return conn;

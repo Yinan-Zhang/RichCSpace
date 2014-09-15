@@ -35,11 +35,11 @@ def draw_triangles(surf, triangle_set, color = (0,200, 0)):
 
 def component_center(component):
 	spheres = {};
-	for triangle in component.keys():
+	for triangle in component.dictionary.keys():
 		for sphere in triangle.spheres:
 			if not spheres.has_key(sphere):
 				spheres[sphere] = 1;
-	center = vec([0]*len( 4 ))
+	center = vec([0]* 4 )
 	for sphere in spheres.keys():
 		center += sphere.center;
 
@@ -50,20 +50,24 @@ def draw_topology_roadmap( surf, rmp_graph_dict ):
 	'''given a graph dictionary, draw the graph to a 2D canvas'''
 	count = 1;	
 	for node in rmp_graph_dict.keys():
-		point = (int(node.center[2]), int(node.center[3]));
+		point = (0,0)
 		if isinstance(node, hyper_sphere):
+			point = (int(node.center[2]), int(node.center[3]));
 			pygame.draw.circle(surf, (0,200,0), point, 4 );
-		elif isinstance(node, dict):
-			draw_triangles(surf, node, ( 0,50 * count,0 ));
+		elif isinstance(node, Component):
+			point = component_center(node);
+			point = ( int(point[2]), int(point[3]) );
+			draw_triangles(surf, node.dictionary, ( 0,50 * count,0 ));
 			count += 1;
 
 		neighbors = rmp_graph_dict[node];
 		for neighbor in neighbors:
 			if isinstance(neighbor, hyper_sphere):
+				#pass;
 				pygame.draw.line( surf, (0,0,0), point, (int(neighbor.center[2]), int(neighbor.center[3])) );
-			elif isinstance(neighbor, dict):
+			elif isinstance(neighbor, Component):
 				center = component_center(neighbor)
-				pygame.draw.line(surf, (0,0,200), point, ( int(center[2]), int(center[3]) ));
+				pygame.draw.line(surf, (200,0,0), point, ( int(center[2]), int(center[3]) ), 3);
 
 def main():
 
@@ -84,10 +88,9 @@ def main():
 	alphashape = Nerve();
 	edges, triangle_set, graph_dict, edge_tri_dict = alphashape.nerve(sphere_set);
 
-	print len(triangle_set)
-
+	#draw_topology_roadmap(DISPLAYSURF, graph_dict)
 	#draw_triangles(DISPLAYSURF, triangle_set);
-
+	
 	components = alphashape.contract(triangle_set, edge_tri_dict);
 	print len(components)
 	i = 1;
@@ -95,11 +98,13 @@ def main():
 		draw_triangles(DISPLAYSURF, component, (0,50 * i, 50 * i));
 		i += 1;
 
-	new_graph_dict = alphashape.build_topology_roadmap(components,graph_dict);
+
+	rmp_graph_dict = alphashape.build_topology_roadmap(components,graph_dict);
 	
+	print len(rmp_graph_dict.keys())
 
 	draw_topology_roadmap(DISPLAYSURF, rmp_graph_dict)
-
+	
 
 	#graph = hyper_graph(new_graph_dict);
 
