@@ -65,7 +65,7 @@ class Graph:
 	def find_node( self, config ):
 		'''given a config in 4D, find the containing node in the graph'''
 		for node in self.graphdict.keys():
-			if isinstance(node, hyper_sphere):
+			if isinstance(node, hyper_sphere) or isinstance(node, l1_sphere):
 				if node.contains(config):
 					return node;
 				pass;

@@ -51,7 +51,7 @@ def draw_topology_roadmap( surf, rmp_graph_dict ):
 	count = 1;	
 	for node in rmp_graph_dict.keys():
 		point = (0,0)
-		if isinstance(node, hyper_sphere):
+		if isinstance(node, hyper_sphere) or isinstance(node, l1_sphere):
 			point = (int(node.center[2]), int(node.center[3]));
 			pygame.draw.circle(surf, (0,200,0), point, 4 );
 		elif isinstance(node, Component):
@@ -62,7 +62,7 @@ def draw_topology_roadmap( surf, rmp_graph_dict ):
 
 		neighbors = rmp_graph_dict[node];
 		for neighbor in neighbors:
-			if isinstance(neighbor, hyper_sphere):
+			if isinstance(neighbor, hyper_sphere) or isinstance(neighbor, l1_sphere):
 				#pass;
 				pygame.draw.line( surf, (0,0,0), point, (int(neighbor.center[2]), int(neighbor.center[3])) );
 			elif isinstance(neighbor, Component):
@@ -79,20 +79,25 @@ def main():
 	DISPLAYSURF.fill((255,255,255));
 	pygame.display.update();
 
-	sphere_set = load_data('BlockRobotMASamplesL2.txt', 'L2');
+	sphere_set = load_data('BlockRobotMASamplesL1.txt', 'L1');
 
 	for sphere in sphere_set:
 		point = (int(sphere.center[2]), int(sphere.center[3]));
-		pygame.draw.circle( DISPLAYSURF, (220,220,220), point, int(sphere.radius), 2 );
-	
-	alphashape = Nerve();
-	edges, triangle_set, graph_dict, edge_tri_dict = alphashape.nerve(sphere_set);
+		if isinstance(sphere, hyper_sphere):
+			pygame.draw.circle( DISPLAYSURF, (220,220,220), point, int(sphere.radius), 2 );
+		elif isinstance(sphere, l1_sphere):
+			radius = int(sphere.radius)
+			points = [ (point[0]-radius,point[1]), (point[0],point[1]-radius), (point[0]+radius,point[1]), (point[0],point[1]+radius) ]
+			pygame.draw.polygon( DISPLAYSURF, (220,220,220), points, 1 );
 
+	alphashape = Nerve();
+	edges, triangle_set, graph_dict, edge_tri_dict, sphere_tri_dict = alphashape.nerve(sphere_set);
+	print "Get {0} triangles.".format( len(triangle_set) )
 	#draw_topology_roadmap(DISPLAYSURF, graph_dict)
 	#draw_triangles(DISPLAYSURF, triangle_set);
 	
-	components = alphashape.contract(triangle_set, edge_tri_dict);
-	#print len(components)
+	components = alphashape.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
+	print "Get {0} components".format(len(components))
 	i = 1;
 	for component in components:
 		draw_triangles(DISPLAYSURF, component, (0,50 * i, 50 * i));
@@ -107,35 +112,41 @@ def main():
 	
 
 	graph = Graph(rmp_graph_dict);
+	for x in graph.graphdict:
+		print ""
+		for y in graph.graphdict[x]:
+			print (x,':	',y)
 
-	start = vec([400,400, 100, 400]);
-	end   = vec([400, 400, 700, 400]);
+	start = vec([400,400, 250, 400]);
+	end   = vec([400, 400, 560, 500]);
 
 	start_node = graph.find_node(start);
 	end_node   = graph.find_node(end);
+	pygame.draw.circle(DISPLAYSURF, (0,0,250), (start[2], start[3]), 4);
+	pygame.draw.circle(DISPLAYSURF, (0,0,250), (end[2], end[3]), 4);
 
-	print start_node;
-	print end_node
+	#print start_node;
+	#print end_node
 
 	paths = graph.find_all_paths(start_node, end_node);
-	print len(paths);
+	count = len(paths);
 	i = 0;
 	for path in paths:
 		i += 1
 		print '================'
 		for node in path:
-			if isinstance(node, hyper_sphere):
+			if isinstance(node, hyper_sphere) or isinstance(node, l1_sphere):
 				point = ( int(node.center[2]), int(node.center[3]) )
 				print point
-				pygame.draw.circle(DISPLAYSURF, (70*i,0,0), point, 10 );
+				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i,0,0), point, 10 );
 			elif isinstance(node, Component):
 				center = component_center(node);
 				point = ( int(center[2]), int(center[3]) );
 				print point
-				pygame.draw.circle(DISPLAYSURF, (70*i,0,0), point, 10 );
+				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i,0,0), point, 10 );
 
 
-	pygame.image.save(DISPLAYSURF, 'roadmap.PNG');
+	pygame.image.save(DISPLAYSURF, 'roadmapL1.PNG');
 
 	pass;
 

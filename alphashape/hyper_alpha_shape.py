@@ -52,11 +52,13 @@ class Nerve:
 		@return edges: (sphere1, sphere2) pairs 
 		@return triangle_set: triangle set
 		@return graph_dict:	dictionary{ sphere1:[sphere2, sphere3,...] }
-		@return edge_tri_dict: dictionary{ (sphere1, sphere2): triangle, .... }'''
-		edges = [];
-		triangle_set = [];
-		graph_dict    = {};
-		edge_tri_dict = {};
+		@return edge_tri_dict: dictionary{ (sphere1, sphere2): triangle, .... }
+		@return sphere_tri_dict: dictionary{ sphere1: [triangle1, tri2...], ... }'''
+		edges 			= [];
+		triangle_set 	= [];
+		graph_dict    	= {};
+		edge_tri_dict 	= {};
+		sphere_tri_dict = {}
 		for i in range(0, len(spheres)):
 			sphere1 = spheres[i];
 			for j in range(0, len(spheres)):
@@ -81,16 +83,29 @@ class Nerve:
 							self.__add2dict__((sphere2,sphere3), triangle, edge_tri_dict);
 							self.__add2dict__((sphere3,sphere2), triangle, edge_tri_dict);
 
+		no_same_tri_set = [];
+		same = [];
 		for tri1 in triangle_set:
+			if tri1 in same:
+				continue;
+			no_same_tri_set.append(tri1);
 			for tri2 in triangle_set:
 				if tri1 == tri2:
 					continue;
 				if tri1.spheres[0] == tri2.spheres[0] or tri1.spheres[0] == tri2.spheres[1] or tri1.spheres[0] == tri2.spheres[2]:
 					if tri1.spheres[1] == tri2.spheres[0] or tri1.spheres[1] == tri2.spheres[1] or tri1.spheres[1] == tri2.spheres[2]:
 						if tri1.spheres[2] == tri2.spheres[0] or tri1.spheres[2] == tri2.spheres[1] or tri1.spheres[2] == tri2.spheres[2]:
-							triangle_set.remove(tri2);
+							#triangle_set.remove(tri2);
+							same.append(tri2);
 
-		return edges, triangle_set, graph_dict, edge_tri_dict;
+		print "initially we have {0} triangles".format(len(triangle_set))
+
+		for tri in no_same_tri_set:
+			self.__add2dict__(tri.spheres[0], tri, sphere_tri_dict);
+			self.__add2dict__(tri.spheres[1], tri, sphere_tri_dict);
+			self.__add2dict__(tri.spheres[2], tri, sphere_tri_dict);
+
+		return edges, no_same_tri_set, graph_dict, edge_tri_dict, sphere_tri_dict;
 
 	def build_topology_roadmap(self, components, graph_dict):
 		'''Build the topology roadmap of C-space.
@@ -119,11 +134,8 @@ class Nerve:
 				new_graph[sphere] = [];
 				for neighbor in graph_dict[sphere]:	   # Loop every neighbor that connects with current sphere
 					if not sphere_comp_dict.has_key(neighbor):
-						#length = (v2(sphere.center[2], sphere.center[3])-v2(neighbor.center[2], neighbor.center[3])).r();
-						#print sphere.center[2], sphere.center[3], neighbor.center[2], neighbor.center[3], length;
 						add2dict(new_graph, sphere,	neighbor)
 					elif not sphere_comp_dict[neighbor] in new_graph[sphere]:
-						#new_graph[sphere].append(sphere_comp_dict[neighbor]);
 						add2dict(new_graph, sphere,	sphere_comp_dict[neighbor]);
 			elif( not new_graph.has_key(sphere_comp_dict[sphere]) ):# the sphere is in a component
 				component = sphere_comp_dict[sphere]
@@ -132,13 +144,8 @@ class Nerve:
 				neighbors = self.component_neighbors(component, graph_dict)
 				for neighbor in neighbors:
 					if not sphere_comp_dict.has_key(neighbor):
-						#new_graph[sphere_comp_dict[sphere]].append(element);
-						print "Comp <-> sphere"
 						add2dict(new_graph, component, neighbor)
 					elif not sphere_comp_dict[neighbor] in new_graph[component] and sphere_comp_dict[neighbor] != component:
-						#new_graph[sphere_comp_dict[sphere]].append(sphere_comp_dict[element]);
-						print "Comp <-> Comp"
-						print component, sphere_comp_dict[neighbor]
 						add2dict(new_graph, component, sphere_comp_dict[neighbor])
 		return new_graph;
 
@@ -166,7 +173,7 @@ class Nerve:
 
 		return len(edge_set) - len(vertices) + 1 - matrix_rank(matrix);
 
-	def contract(self, triangle_set, edge_tri_dict):
+	def contract(self, triangle_set, edge_tri_dict, sphere_tri_dict):
 		'''Contract a set of triangles to several sets of triangles, such that each set has first betti number of 0'''
 		visited_vertices = [];
 		dict_set = []; 	# we use a dictionary to store a set of triangles;
@@ -174,13 +181,13 @@ class Nerve:
 		used = {};
 		for triangle in triangle_set:
 			if not used.has_key(triangle):
-				component = self.contract_node(triangle, used, edge_tri_dict)
+				component = self.contract_triangle(triangle, used, edge_tri_dict, sphere_tri_dict)
 				dict_set.append(component)
 		return dict_set;
 
-	def contract_node(self, triangle, used, edge_tri_dict):
+	def contract_triangle(self, triangle, used, edge_tri_dict, sphere_tri_dict):
 		'''Contract a triangle and its neighbor triangles'''
-		neighbors = self.find_neighbor(triangle, edge_tri_dict)
+		neighbors = self.find_neighbor(triangle, edge_tri_dict, sphere_tri_dict)
 		component = {};
 		component[triangle] = 1
 		used[triangle] = True
@@ -193,7 +200,7 @@ class Nerve:
 					used[neighbor] = True
 					del neighbors[neighbor]
 					found = True;
-					new_neighbors = self.find_neighbor(neighbor, edge_tri_dict)
+					new_neighbors = self.find_neighbor(neighbor, edge_tri_dict, sphere_tri_dict)
 					for new_triangle in new_neighbors.keys():
 						if not used.has_key(new_triangle) and not neighbors.has_key(new_triangle):
 							neighbors[new_triangle] = 1
@@ -219,15 +226,22 @@ class Nerve:
 					edge_set[(a, b)] = 1
 		return edge_set.keys();
 
-	def find_neighbor(self, triangle, edge_tri_dict):
+	def find_neighbor(self, triangle, edge_tri_dict, sphere_tri_dict):
 		'''Find neighbor triangles of a given triangle'''
 		neighbors = {};
+		'''
 		edges = triangle.edges();
 		for edge in edges:
 			if edge_tri_dict.has_key(edge):
 				for tri in edge_tri_dict[edge]:
 					if not neighbors.has_key(tri):
 						neighbors[tri] = 1;
+		'''
+		for sphere in triangle.spheres:
+			neighbor_tris = sphere_tri_dict[sphere];
+			for tri in neighbor_tris:
+				if tri != triangle and not neighbors.has_key(tri):
+					neighbors[tri] = 1;
 		return neighbors
 
 	def component_neighbors(self, component, graph_dict):
@@ -249,15 +263,15 @@ class Nerve:
 	def connections_between( self, elem1, elem2, graph_dict ):
 		'''return the number of connections between the elem1 and the elem2'''
 
-		if isinstance(elem1, hyper_sphere) and isinstance(elem2, hyper_sphere):
+		if (isinstance(elem1, hyper_sphere) or isinstance(elem1, l1_sphere)) and (isinstance(elem2, hyper_sphere) or isinstance(elem2, l1_sphere)):
 			return 1;
-		elif isinstance(elem1, hyper_sphere) and isinstance(elem2, Component):
+		elif (isinstance(elem1, hyper_sphere) or isinstance(elem1, l1_sphere)) and isinstance(elem2, Component):
 			conn = 0;
 			for neighbor in graph_dict[elem1]:
 				if elem2.contains(neighbor):
 					conn += 1;
 			return conn;
-		elif isinstance(elem1, Component) and isinstance(elem2, hyper_sphere):
+		elif isinstance(elem1, Component) and (isinstance(elem2, hyper_sphere) or isinstance(elem2, l1_sphere)):
 			conn = 0;
 			for neighbor in graph_dict[elem2]:
 				if elem1.contains(neighbor):
