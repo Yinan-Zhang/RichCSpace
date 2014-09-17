@@ -68,6 +68,10 @@ class Robot:
 		@param polygon: Polygon'''
 		return False;
 
+	def def is_valid_config(self, config):
+		'''test if a robot is valid'''
+		return True;
+
 
 class DiffDriveRobot( Robot ):
 	'''Differential Drive Robot class. A diff drive robot will be simplidied 

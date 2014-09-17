@@ -76,13 +76,38 @@ class samplinghelper:
 		'''determine if a config is feasible'''
 		pass;
 
-	def config_clearance( self, robot, config, mode = 'L2' ):
+	def config_clearance( self, robot, config, dimensions, mode = 'L2' ):
 		'''Get the config clearance'''
 		pass;
 
-	def maSample( self, robot, config, direction ):
+	def maSample( self, robot, config, direction, max_len, dimensions, mode = 'L2' ):
 		'''get the medial axis sample along a direction'''
+		if not self.is_valid_config(robot, config):
+			return None;
+		t = 1;
+		last_increase = False;
+		last_dist = self.config_clearance(robot, config, dimensions, mode);
+
+		while True:
+			if t-1>=max_len:
+				return None;
+			temp = config + direction * t;
+			this_dist = self.config_clearance(robot, temp, dimensions, mode);
+			if last_dist > 0 and this_dist <= 0:
+				break;
+			this_increase = (this_dist-last_dist) > 0;
+			if last_increase and not this_increase:
+				if self.is_valid_config(robot, temp):
+					return temp, this_dist;
+				else:
+					return None, None;
+			else:
+				t += 1;
+				last_increase = this_increase;
+				last_dist = this_dist;
+			pass
 		pass;
+		return None, None;
 
 class BlockSamplingHelper( samplinghelper ):
 	def __init__(self):
