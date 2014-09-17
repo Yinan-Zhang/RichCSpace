@@ -58,6 +58,15 @@ class Block(Polygon):
 
 		return chosen;
 
+	def distance(self, point):
+		'''distance from a point to the block'''
+		dists = [];
+		for line in self.lines:
+			closest = line.closest_point(point);
+			dist = (closest-point).r();
+			dists.append(dist);
+		return min(dists);
+
 	def distance2wall(self, dimensions = (800,800)):
 		'''distance to wall, return movement vector'''
 		dists = []
