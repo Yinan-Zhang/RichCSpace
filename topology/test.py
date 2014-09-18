@@ -3,6 +3,7 @@ import sys, os, math, pygame
 sys.path.append('../basics/math')
 sys.path.append('../alphashape')
 
+from time 				import sleep
 from hyper_geometry 	import *
 from hyper_alpha_shape 	import *
 from l1_geometry 		import *
@@ -30,7 +31,7 @@ def load_data(filename, mode):
 def draw_triangles(surf, triangle_set, color = (0,200, 0)):
 	for triangle in triangle_set:
 		points = [ (int(triangle.spheres[0].center[0]), int(triangle.spheres[0].center[1]) ), (int(triangle.spheres[1].center[0]), int(triangle.spheres[1].center[1]) ), ( int(triangle.spheres[2].center[0]), int(triangle.spheres[2].center[1] )) ];
-		pygame.draw.polygon(surf, color, points, 2);
+		pygame.draw.polygon(surf, color, points, 0);
 	pygame.display.update();
 
 def component_center(component):
@@ -114,8 +115,8 @@ def main():
 			draw_triangles(DISPLAYSURF, component, (0, 250/len(components) * i, 250/len(components) * i));
 		i += 1;
 	
-	pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
-	return;
+	#pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
+	#return;
 
 	rmp_graph_dict = alphashape.build_topology_roadmap(components,graph_dict);
 	
@@ -123,8 +124,8 @@ def main():
 
 	draw_topology_roadmap(DISPLAYSURF, rmp_graph_dict)
 	
-	pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
-	return;
+	#pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
+	#return;
 	
 	graph = Graph(rmp_graph_dict);
 	'''
@@ -134,8 +135,8 @@ def main():
 			print (x,':	',y)
 	'''
 
-	start = vec([20, 20]);
-	end   = vec([770, 770]);
+	start = vec([50, 50]);
+	end   = vec([750, 750]);
 
 	start_node = graph.find_node(start);
 	end_node   = graph.find_node(end);
@@ -146,21 +147,26 @@ def main():
 	#print end_node
 
 	paths = graph.find_all_paths(start_node, end_node);
-	count = len(paths);
+	count = 2#len(paths);
+	print count;
 	i = 0;
+	last_pos = None;
 	for path in paths:
 		i += 1
-		print '================'
+		if i > 3:
+			break;
 		for node in path:
 			if isinstance(node, hyper_sphere) or isinstance(node, l1_sphere):
 				point = ( int(node.center[0]), int(node.center[1]) )
 				#print point
-				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i,0,0), point, 10 );
+				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i, 100,0), point, 10 );
 			elif isinstance(node, Component):
 				center = component_center(node);
 				point = ( int(center[0]), int(center[1]) );
 				#print point
 				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i,0,0), point, 10 );
+			pygame.display.update();
+			sleep(0.5);
 
 
 	pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
