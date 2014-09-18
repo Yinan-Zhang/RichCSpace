@@ -68,9 +68,13 @@ class Robot:
 		@param polygon: Polygon'''
 		return False;
 
-	def def is_valid_config(self, config):
+	def is_valid_config(self, config):
 		'''test if a robot is valid'''
 		return True;
+
+	def config_clearance( self, config, mode='L2' ):
+		'''Get clearance of a given configuration'''
+		pass;
 
 
 class DiffDriveRobot( Robot ):

@@ -153,23 +153,22 @@ class Nerve:
 	def betti_number( self, triangle_set, edge_set, edge_tri_dict ):
 		'''Given some edges and triangles between edges, compute the first betti number.
 		Needs to make sure there is no (1,2), (2,1) kind of situations in the edge_set'''
-		added_triangles = {};
 		vertices = [];
+
 		for edge in edge_set:				# loop every edge
 			if not edge[0] in vertices:		# put vertices in the vertices set
 				vertices.append(edge[0]);
 			if not edge[1] in vertices:
 				vertices.append(edge[1]);	
-			triangles = edge_tri_dict[edge];		# 
-			for triangle in triangles:
-				if triangle not in added_triangles:
-					added_triangles[triangle] = 1;
-
-		matrix = numpy.zeros((len(edge_set), len(added_triangles.keys()) ), dtype='int32');
+			
+		print "Creating a {0} matrix".format((len(edge_set), len(triangle_set)))
+		matrix = numpy.zeros((len(edge_set), len(triangle_set) ), dtype='int32');
 		for i in range(0, len(edge_set)):
-			for j in range(0, len(added_triangles.keys())):
-				if added_triangles.keys()[j] in edge_tri_dict[edge_set[i]]:
+			for j in range(0, len(triangle_set)):
+				if triangle_set.keys()[j] in edge_tri_dict[edge_set[i]]:
 					matrix[i, j] = 1;
+
+		print matrix, matrix_rank(matrix)
 
 		return len(edge_set) - len(vertices) + 1 - matrix_rank(matrix);
 
@@ -179,11 +178,32 @@ class Nerve:
 		dict_set = []; 	# we use a dictionary to store a set of triangles;
 						# The set of dictionaries is the set of contracted triangles.
 		used = {};
+
+		i = 0;
 		for triangle in triangle_set:
+			print "trying triangle: {0}".format(i);
+			i+=1
 			if not used.has_key(triangle):
-				component = self.contract_triangle(triangle, used, edge_tri_dict, sphere_tri_dict)
-				dict_set.append(component)
+				component = {};
+				# Do it recursively
+				self.contrct_triangle_recursive(component, triangle, used, edge_tri_dict, sphere_tri_dict)
+				#component = self.contract_triangle(triangle, used, edge_tri_dict, sphere_tri_dict)
+				if len(component.keys()) > 0:
+					dict_set.append(component)
 		return dict_set;
+
+	def contrct_triangle_recursive( self, component, triangle, used, edge_tri_dict, sphere_tri_dict ):
+		'''Contract a triangle and its neighbor triangles'''
+		if used.has_key(triangle) or not self.is_useful(component, triangle, edge_tri_dict):
+			return;
+
+		component[triangle] = 1
+		used[triangle] = True
+
+		neighbors = self.find_component_neighbors(component, edge_tri_dict, sphere_tri_dict)
+		print len(neighbors)
+		for neighbor in neighbors:
+			self.contrct_triangle_recursive(component, neighbor, used, edge_tri_dict, sphere_tri_dict);
 
 	def contract_triangle(self, triangle, used, edge_tri_dict, sphere_tri_dict):
 		'''Contract a triangle and its neighbor triangles'''
@@ -226,9 +246,24 @@ class Nerve:
 					edge_set[(a, b)] = 1
 		return edge_set.keys();
 
+	def find_component_neighbors( self, component, edge_tri_dict, sphere_tri_dict ):
+		'''find the neighbor triangle of a given component'''
+		neighbors = {};
+		for tri in component.keys():
+			tri_neighbors = self.find_neighbor(tri, edge_tri_dict, sphere_tri_dict);
+			for neighbor in tri_neighbors:
+				if not neighbors.has_key(neighbor):
+					neighbors[neighbor] = 1;
+		return neighbors;
+
 	def find_neighbor(self, triangle, edge_tri_dict, sphere_tri_dict):
 		'''Find neighbor triangles of a given triangle'''
 		neighbors = {};
+		for sphere in triangle.spheres:
+			neighbor_tris = sphere_tri_dict[sphere];
+			for tri in neighbor_tris:
+				if tri != triangle and not neighbors.has_key(tri):
+					neighbors[tri] = 1;
 		'''
 		edges = triangle.edges();
 		for edge in edges:
@@ -237,11 +272,6 @@ class Nerve:
 					if not neighbors.has_key(tri):
 						neighbors[tri] = 1;
 		'''
-		for sphere in triangle.spheres:
-			neighbor_tris = sphere_tri_dict[sphere];
-			for tri in neighbor_tris:
-				if tri != triangle and not neighbors.has_key(tri):
-					neighbors[tri] = 1;
 		return neighbors
 
 	def component_neighbors(self, component, graph_dict):

@@ -58,12 +58,15 @@ class Block(Polygon):
 
 		return chosen;
 
-	def distance(self, point):
+	def distance2point(self, point, mode="L2"):
 		'''distance from a point to the block'''
 		dists = [];
 		for line in self.lines:
 			closest = line.closest_point(point);
-			dist = (closest-point).r();
+			if mode == 'L2' or mode == 'l2':
+				dist = (closest-point).r();
+			elif mode == 'l1' or mode == 'L1':
+				dist = (closest-point).l1();
 			dists.append(dist);
 		return min(dists);
 
