@@ -153,20 +153,20 @@ def main():
 	last_pos = None;
 	for path in paths:
 		i += 1
-		if i > 3:
+		if i > 2:
 			break;
 		for node in path:
 			if isinstance(node, hyper_sphere) or isinstance(node, l1_sphere):
 				point = ( int(node.center[0]), int(node.center[1]) )
 				#print point
-				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i, 100,0), point, 10 );
+				pygame.draw.circle(DISPLAYSURF, ((250/count)*i, 100,0), point, 10 );
 			elif isinstance(node, Component):
 				center = component_center(node);
 				point = ( int(center[0]), int(center[1]) );
 				#print point
 				pygame.draw.circle(DISPLAYSURF, ((250.0/count)*i,0,0), point, 10 );
 			pygame.display.update();
-			sleep(0.5);
+			sleep(0.2);
 
 
 	pygame.image.save(DISPLAYSURF, 'warehouse_roadmapL2.PNG');
