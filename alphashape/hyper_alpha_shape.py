@@ -338,7 +338,7 @@ class Nerve:
 				if elem1.contains(neighbor):
 					conn += 1;
 			return conn;
-		elif isinstance(elem1, Component) and isinstance(elem2, Component):
+		elif isinstance(elem1, Component) and isinstance(elem2, Component): ################## ==========================================
 			spheres = elem1.spheres();
 			conn = 1;
 			for sphere in spheres:
