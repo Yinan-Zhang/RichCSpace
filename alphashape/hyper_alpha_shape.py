@@ -7,7 +7,7 @@ __author__ = 'Yinan Zhang'
 __revision__ = '$Revision$'
 
 
-import sys, os, math
+import sys, os, math, time
 sys.path.append('../basics/math')
 
 from numpy.linalg import matrix_rank
@@ -150,6 +150,7 @@ class Nerve:
 		return new_graph;
 
 	def GF2_matrix_rank( self, matrix, nrows, ncols ):
+		start_time = time.time();
 		rank = 0;
 		n = min(nrows, ncols)
 		for i in range(n):
@@ -176,6 +177,7 @@ class Nerve:
 					continue;
 				for j in range(ncols):
 					matrix[k, j] = matrix[k, j] ^ matrix[pivot_row, j]
+		print '\t running time:{0}'.format( time.time() - start_time )
 		return rank;
 
 	def betti_number( self, triangle_set, edge_set, edge_tri_dict ):
@@ -212,33 +214,36 @@ class Nerve:
 
 		i = 0;
 		for triangle in triangle_set:
-			print "trying triangle: {0}".format(i);
 			i+=1
 			if not used.has_key(triangle):
-				component = {};
+				print "trying triangle: {0}".format(i);
 				# Do it recursively
-				self.contrct_triangle_recursive(component, triangle, used, edge_tri_dict, sphere_tri_dict)
-				#component = self.contract_triangle(triangle, used, edge_tri_dict, sphere_tri_dict)
+				#component = {};
+				#self.contrct_triangle_recursive(component, triangle, used, edge_tri_dict, sphere_tri_dict)
+				# Do it iteratively
+				component = self.contract_triangle(triangle, used, edge_tri_dict, sphere_tri_dict)
 				if len(component.keys()) > 0:
 					dict_set.append(component)
 		return dict_set;
 
 	def contrct_triangle_recursive( self, component, triangle, used, edge_tri_dict, sphere_tri_dict ):
 		'''Contract a triangle and its neighbor triangles'''
-		if used.has_key(triangle) or not self.is_useful(component, triangle, edge_tri_dict):
+		if used.has_key(triangle):
 			return;
 
 		component[triangle] = 1
 		used[triangle] = True
 
-		neighbors = self.find_component_neighbors(component, edge_tri_dict, sphere_tri_dict)
-		print len(neighbors)
+		neighbors = self.find_component_neighbors(component, edge_tri_dict, sphere_tri_dict, used)
+		if len(neighbors) == 0:
+			return;
 		for neighbor in neighbors:
-			self.contrct_triangle_recursive(component, neighbor, used, edge_tri_dict, sphere_tri_dict);
+			if not used.has_key(neighbor) and self.is_useful(component, neighbor, edge_tri_dict):
+				return self.contrct_triangle_recursive(component, neighbor, used, edge_tri_dict, sphere_tri_dict);
 
 	def contract_triangle(self, triangle, used, edge_tri_dict, sphere_tri_dict):
 		'''Contract a triangle and its neighbor triangles'''
-		neighbors = self.find_neighbor(triangle, edge_tri_dict, sphere_tri_dict)
+		neighbors = self.find_neighbor(triangle, edge_tri_dict, sphere_tri_dict, used)
 		component = {};
 		component[triangle] = 1
 		used[triangle] = True
@@ -249,12 +254,13 @@ class Nerve:
 				if not used.has_key(neighbor) and self.is_useful(component, neighbor, edge_tri_dict):
 					component[neighbor] = 1
 					used[neighbor] = True
-					del neighbors[neighbor]
+					#del neighbors[neighbor]
 					found = True;
-					new_neighbors = self.find_neighbor(neighbor, edge_tri_dict, sphere_tri_dict)
-					for new_triangle in new_neighbors.keys():
-						if not used.has_key(new_triangle) and not neighbors.has_key(new_triangle):
-							neighbors[new_triangle] = 1
+					new_neighbors = self.find_neighbor(neighbor, edge_tri_dict, sphere_tri_dict, used);
+					neighbors = new_neighbors
+					#for new_triangle in new_neighbors.keys():
+					#	if not used.has_key(new_triangle) and not neighbors.has_key(new_triangle):
+					#		neighbors[new_triangle] = 1
 		return component;
 
 	def is_useful(self, component, triangle, edge_tri_dict):
@@ -277,23 +283,24 @@ class Nerve:
 					edge_set[(a, b)] = 1
 		return edge_set.keys();
 
-	def find_component_neighbors( self, component, edge_tri_dict, sphere_tri_dict ):
+	def find_component_neighbors( self, component, edge_tri_dict, sphere_tri_dict, used_triangles ):
 		'''find the neighbor triangle of a given component'''
 		neighbors = {};
 		for tri in component.keys():
-			tri_neighbors = self.find_neighbor(tri, edge_tri_dict, sphere_tri_dict);
+			tri_neighbors = self.find_neighbor(tri, edge_tri_dict, sphere_tri_dict, used_triangles);
 			for neighbor in tri_neighbors:
-				if not neighbors.has_key(neighbor):
+				if not used_triangles.has_key(neighbor) and not neighbors.has_key(neighbor):
+					#print "find neighbor {0} for component".format(neighbor);
 					neighbors[neighbor] = 1;
 		return neighbors;
 
-	def find_neighbor(self, triangle, edge_tri_dict, sphere_tri_dict):
+	def find_neighbor(self, triangle, edge_tri_dict, sphere_tri_dict, used_triangles):
 		'''Find neighbor triangles of a given triangle'''
 		neighbors = {};
 		for sphere in triangle.spheres:
 			neighbor_tris = sphere_tri_dict[sphere];
 			for tri in neighbor_tris:
-				if tri != triangle and not neighbors.has_key(tri):
+				if not used_triangles.has_key( tri ) and tri != triangle and not neighbors.has_key(tri):
 					neighbors[tri] = 1;
 		'''
 		edges = triangle.edges();
