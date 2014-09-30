@@ -112,8 +112,9 @@ def main():
 	
 	i = 1;
 	for component in components:
+		print component
 		if len(component.keys()) > 1:
-			draw_triangles(DISPLAYSURF, component, (0, 250/len(components) * i, 250/len(components) * i));
+			draw_triangles(DISPLAYSURF, component, (0, 250/len(components) * i, 0));
 		i += 1;
 	
 	pygame.image.save(DISPLAYSURF, 'experiment_components.PNG');

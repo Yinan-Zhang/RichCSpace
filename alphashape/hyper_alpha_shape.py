@@ -193,10 +193,21 @@ class Nerve:
 			
 		print "Creating a {0} matrix".format((len(edge_set), len(triangle_set)))
 		matrix = numpy.zeros((len(edge_set), len(triangle_set) ), dtype='int32');
-		for i in range(0, len(edge_set)):
-			for j in range(0, len(triangle_set)):
-				if triangle_set.keys()[j] in edge_tri_dict[edge_set[i]]:
+		triangle_set_keys = triangle_set.keys()
+		triangle_mapping = {}
+		i = 0
+		for triangle in triangle_set_keys:
+			triangle_mapping[triangle] = i;
+			i += 1;
+
+		i = 0
+		for edge in edge_set:
+			triangles = edge_tri_dict[edge]
+			for triangle in triangles:
+				if triangle_mapping.has_key(triangle):
+					j = triangle_mapping[triangle]
 					matrix[i, j] = 1;
+			i += 1
 
 		#print "Before Gaussian Elimination:"
 		#print matrix, self.GF2_matrix_rank(matrix, len(edge_set), len(triangle_set))
@@ -267,7 +278,9 @@ class Nerve:
 		'''determine if a triangle can be added to current component without increasing 1st betti number.'''
 		component[triangle] = 1
 		edge_set = self.component_edges(component);
-		if self.betti_number(component, edge_set, edge_tri_dict) == 0:
+		betti_number = self.betti_number(component, edge_set, edge_tri_dict);
+		print betti_number
+		if betti_number == 0:
 			del component[triangle]
 			return True;
 		del component[triangle]

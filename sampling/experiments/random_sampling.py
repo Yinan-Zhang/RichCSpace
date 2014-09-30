@@ -22,7 +22,7 @@ def inside(sphere, point):
 	@param point: (x,y)'''
 	if (sphere[0]-point[0])**2 + (sphere[1]-point[1])**2 < (sphere[2]*1)**2:
 		return True;
-	if point[0] <= 400 and point[0] >= 250 and point[1] <= 400 and point[1] >= 200:
+	if point[0] <= 400 and point[0] >= 350 and point[1] <= 400 and point[1] >= 350:
 		return True;
 
 def sample_one(n, samples):
@@ -30,8 +30,8 @@ def sample_one(n, samples):
 	global height;
 	failed_times = 0;
 	while failed_times < n:
-		rand_x = random.randint(150, width-100);
-		rand_y = random.randint(150, height-100);
+		rand_x = random.randint(270, width-200);
+		rand_y = random.randint(270, height-200);
 		point = ( rand_x, rand_y );
 		r = 40;
 		good_sample = True;
@@ -61,7 +61,7 @@ def main():
 	DISPLAYSURF.fill((255,255,255));
 	pygame.display.update();
 
-	spheres = sample(1000);
+	spheres = sample(10000);
 
 	for sphere in spheres:
 		center = (int(sphere[0]), int(sphere[1]));
