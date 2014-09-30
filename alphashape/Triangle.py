@@ -23,6 +23,10 @@ class Triangle:
 	def __hash__( self ):
 		return hash(self.code);
 
+	def dist_edges(self):
+		'''return distinguish edges. (1,2) and (2,1) edges are considered the same'''
+		return [ (self.spheres[0], self.spheres[1]), (self.spheres[0], self.spheres[2]),(self.spheres[1], self.spheres[2]) ];
+
 	def edges(self):
 		return [(self.spheres[0],self.spheres[1]),(self.spheres[1],self.spheres[0]), (self.spheres[0],self.spheres[2]), (self.spheres[2],self.spheres[0]), (self.spheres[1],self.spheres[2]), (self.spheres[2],self.spheres[1]) ]
 
@@ -111,3 +115,67 @@ class Triangle:
 		if ball1.contains(rad_center) or ball2.contains(rad_center) or ball3.contains(rad_center):
 			return True;
 		return False;
+
+
+
+class Triangulator:
+	def __init__(self, spheres):
+		self.spheres = spheres;
+
+	def triangulate(self):
+		def __add2dict__(dct, key, content):
+			'''Add a content to a dictionary. dct[key] should be an array'''
+			if not dct.has_key(key):
+				dct[key] = [content];
+			elif not content in dct[key]:
+				dct[key].append(content);
+
+		def __add_edge_2_dict__(dct, edge_key, content):
+			'''Add a content to a dictionary. dct[key] should be an array'''
+			edge1 = (edge_key[0], edge_key[1]);
+			edge2 = (edge_key[1], edge_key[0]);
+			if dct.has_key(edge1) and dct.has_key(edge2):
+				for elem in dct[edge2]:
+					if not elem in dct[edge1]:
+						dct[edge1].append(content);
+				del dct[edge2];
+			elif dct.has_key(edge1) and not dct.has_key(edge2) and not content in dct[edge1]:
+				dct[edge1].append(content);
+			elif dct.has_key(edge2) and not dct.has_key(edge1) and not content in dct[edge2]:
+				dct[edge2].append(content);
+			else:
+				dct[edge1] = [content];
+
+		#######################################
+		####       Delaunay Triangulation
+		from scipy.spatial import Delaunay
+		points = [];
+		for sphere in self.spheres:
+			points.append(sphere.center.to_list());
+
+		points_np = numpy.array(points);
+		triangles_index = Delaunay(points_np);
+
+		triangle_set = {};
+		sphere_tri_dict = {};
+		edge_tri_dict = {};
+
+		#########################################
+		#### 	    Building filled triangles
+		####    And sphere-triangle edge-triangle dict
+		for tri_idx in triangles_index.simplices:
+			sphere0 = self.spheres[tri_idx[0]]
+			sphere1 = self.spheres[tri_idx[1]]
+			sphere2 = self.spheres[tri_idx[2]]
+			triangle = Triangle(sphere0, sphere1, sphere2);
+			if triangle.is_filled():
+				triangle_set[triangle] = 1;
+				__add2dict__(sphere_tri_dict, sphere0, triangle);
+				__add2dict__(sphere_tri_dict, sphere1, triangle);
+				__add2dict__(sphere_tri_dict, sphere2, triangle);
+				__add_edge_2_dict__(edge_tri_dict, (sphere0, sphere1), triangle);
+				__add_edge_2_dict__(edge_tri_dict, (sphere0, sphere2), triangle);
+				__add_edge_2_dict__(edge_tri_dict, (sphere1, sphere2), triangle);
+
+		return triangle_set, sphere_tri_dict, edge_tri_dict;
+

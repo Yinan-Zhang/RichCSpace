@@ -24,6 +24,9 @@ class vec:
 		'''@param coords: n-element list'''
 		self.pos = coords;
 
+	def to_list(self):
+		return self.pos;
+
 	def __str__( self ):
 		return str(self.pos);
 
