@@ -88,6 +88,9 @@ class Component:
 		self.edge_list = [];
 		self.triangle_set = {};
 
+	def spheres(self):
+		return self.spheres.keys();
+
 	def add_sphere(self, sphere, edge_tri_dict):
 		'''determine if we can add a sphere to the component without increasing the 1-st betti number'''
 		if self.spheres.has_key(sphere):
@@ -128,6 +131,54 @@ class Component:
 class Contraction:
 	def __init__(self, spheres):
 		self.spheres = spheres;
+		self.graph = {};			# connections between spheres
+
+		for sphere1 in self.spheres:
+			for sphere2 in self.spheres:
+				if sphere1 != sphere2 and sphere1.intersects(sphere2):
+					if not self.graph.has_key(sphere1):
+						self.graph[sphere1] = [sphere2];
+					elif not sphere2 in self.graph[sphere1]:
+						self.graph[sphere1].append(sphere2);
 
 	def contract(self, triangle_set, edge_tri_dict, sphere_tri_dict):
 		'''Contract a set of balls to several sets of balls, such that each set has first betti number of 0'''
+		used_spheres = []
+		component_set = [];
+
+		for sphere in self.spheres:
+			if not used_spheres.has_key[sphere]:
+				component = self.contract_sphere(sphere, used_spheres, edge_tri_dict, sphere_tri_dict)
+				if len(component.keys()) > 0:
+					component_set.append(component)
+
+		return component_set;
+
+	def contract_sphere(self, sphere, used_spheres, edge_tri_dict, sphere_tri_dict):
+		'''start from a sphere as the init of component, contract its neighbors as much as possible'''
+		component = Component(sphere);
+		neighbors = self.component_neighbor_spheres();
+		find_new_sphere = True;
+
+		while find_new_sphere:
+			find_new_sphere = False;
+			for neighbor in neighbors:
+				if component.add_sphere(neighbor, edge_tri_dict):
+					used_spheres[neighbor] = 1;
+					find_new_sphere = True;
+
+		return component;
+
+	def component_neighbor_spheres(self, component, used_spheres, sphere_tri_dict):
+		'''Find component's neighbor spheres'''
+		comp_spheres = component.spheres();
+		neighbors = {};
+		for sphere in comp_spheres:
+			curr_neighbors = self.graph[sphere];
+			for curr_neighbor in curr_neighbors:
+				if not used_spheres.has_key[curr_neighbor] and not neighbors.has_key(curr_neighbor):
+					neighbors[curr_neighbor] = 1;
+		return curr_neighbors.keys();
+
+
+
