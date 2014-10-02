@@ -52,6 +52,10 @@ class Triangle:
 		return False;	
 
 	def is_filled(self):
+
+		if not self.spheres[0].intersects(self.spheres[1]) or not self.spheres[0].intersects(self.spheres[2]) or not self.spheres[2].intersects(self.spheres[1]):
+			return False;
+
 		if isinstance(self.spheres[0], l1_sphere ):
 			return self.is_filled_l1();
 

@@ -15,6 +15,16 @@ from hyper_geometry import *
 from l1_geometry	import *
 from Triangle	   import *
 
+def draw_triangle2( triangle, surface, color ):
+	points = [ (int(triangle.spheres[0].center[0]), int(triangle.spheres[0].center[1]) ), (int(triangle.spheres[1].center[0]), int(triangle.spheres[1].center[1]) ), ( int(triangle.spheres[2].center[0]), int(triangle.spheres[2].center[1] )) ];
+	pygame.draw.polygon(surface, color, points, 5);
+	return;
+
+def draw_triangle( triangle, surface, color ):
+	points = [ (int(triangle.spheres[0].center[0]), int(triangle.spheres[0].center[1]) ), (int(triangle.spheres[1].center[0]), int(triangle.spheres[1].center[1]) ), ( int(triangle.spheres[2].center[0]), int(triangle.spheres[2].center[1] )) ];
+	pygame.draw.polygon(surface, color, points);
+	return;
+
 def GF2_matrix_rank( matrix, nrows, ncols ):
 	'''Given a matrix, compute its rank'''
 	rank = 0;
@@ -52,7 +62,7 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 		if not vertices.has_key(edge[0]):# put vertices in the vertices set
 			vertices[edge[0]] = 1;
 		if not vertices.has_key(edge[1]):
-			vertices[edge[0]] = 1;   
+			vertices[edge[1]] = 1;
 		
 	#print "Creating a {0} matrix".format((len(edge_list), len(triangle_set)))
 	matrix = numpy.zeros((len(edge_list), len(triangle_set) ), dtype='int32');
@@ -74,12 +84,17 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 
 		triangles = edge_tri_dict[edge]
 		for triangle in triangles:
-			if triangle_mapping.has_key(triangle):
+			if triangle_set.has_key(triangle) and triangle_mapping.has_key(triangle):
 				j = triangle_mapping[triangle]
 				matrix[i, j] = 1;
 		i += 1
 
-	return len(edge_list) - len(vertices) + 1 - GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
+	print "---- Betti Number ----"
+	print "matrix:\n{0}".format(matrix);
+	print "edges: {0}".format(len(edge_list));
+	print "vertices: {0}".format(len(vertices));
+	rank = GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
+	return len(edge_list) - len(vertices) + 1 - rank;
 
 
 class Component:
@@ -89,55 +104,72 @@ class Component:
 		'''A component should at least have one ball'''
 		self.spheres = {}
 		self.spheres[init_ball] = 1;
-		self.edge_list = [];
+		self.edge_set = {};
 		self.triangle_set = {};
 
 	def get_spheres(self):
 		return self.spheres.keys();
 
-	def add_sphere(self, sphere, edge_tri_dict):
+	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
 		'''determine if we can add a sphere to the component without increasing the 1-st betti number'''
 		if self.spheres.has_key(sphere):
 			return False;
 			#raise Exception('You got a bug, the sphere is already in the component');
-		
+		self.spheres[sphere] = 1;
+
 		new_triangles = {};
 		new_edges = {};
+
+		candidate_triangles = sphere_tri_dict[sphere];
+		i = 1;
+		for tri in candidate_triangles:
+			if new_triangles.has_key(tri) and self.triangle_set.has_key(tri):
+				continue;
+			# all vertices in the triangle are in the component;
+			valid = True;
+			for s in tri.spheres:
+				if not self.spheres.has_key(s):
+					valid = False;
+			if not valid:
+				continue;
+			new_triangles[tri] = 1;
+			draw_triangle(tri, surf, (0,250,0));
+			pygame.display.update();
+
+			# add edges of the triangle to our component
+			for v1, v2 in tri.edges():
+				if (not self.edge_set.has_key((v1, v2)) and not self.edge_set.has_key((v2, v1))) and ( not new_edges.has_key( (v2, v1)) and not new_edges.has_key( (v2, v1) ) ):
+					new_edges[ (v1, v2) ] = 1;
+					pygame.draw.line( surf, (255,0,0), (int(v1.center[0]),int(v1.center[1])), (int(v2.center[0]),int(v2.center[1])), 2 )
+					pygame.display.update();
 
 		# Get new edges that might be added to the component
 		for ball in self.spheres.keys(): 			# This step could be slow!!! (If the component has too many spheres already)
 			if ball.intersects(sphere) and not new_edges.has_key((ball, sphere)) and not new_edges.has_key((sphere,ball)):
-				new_edges[(ball, sphere)] = 1;
-
-		# Get new triangles that might be added to the component
-		for vert1, vert2 in new_edges.keys():
-			edge_asct_tris = []
-
-			if edge_tri_dict.has_key( (vert1, vert2) ):
-				edge_asct_tris = edge_tri_dict[(vert1, vert2)];	# triangles associated to an edge. 
-															# might or might not be a triangle in self.triangle_set
-			if edge_tri_dict.has_key( (vert2, vert1) ):
-				edge_asct_tris += edge_tri_dict[(vert2, vert1)];
-
-			#edge_asct_tris += edge_asct_tris[(vert2, vert1)];
-			for tri in edge_asct_tris:
-				if not new_triangles.has_key(tri):
-					new_triangles[tri] = 1;
+				if edge_tri_dict.has_key( (ball, sphere) ) or edge_tri_dict.has_key((sphere, ball)):
+					new_edges[(ball, sphere)] = 1;
+					pygame.draw.line( surf, (255,0,0), (int(ball.center[0]),int(ball.center[1])), (int(sphere.center[0]),int(sphere.center[1])), 2 )
+					pygame.display.update();
+		
 
 		# Now we have distinct new edges and new triangles while add a new sphere
 		# Add them up.
-		total_triangle_set = dict( self.triangle_set.items() + new_triangles.items() );
-		total_edges 	   = self.edge_list + new_edges.keys();
+		total_triangle_set = dict(self.triangle_set.items() + new_triangles.items());
+		total_edges 	   = dict(self.edge_set.items() + new_edges.items());
 		# Time to determine the betti number.
-		betti 	   		   = betti_number(total_triangle_set, total_edges, edge_tri_dict);
+		#print "Total Triangle Set:\n {0}".format(total_triangle_set);
+		#print "Total Edge Set: {0}".format(total_edges);
+		#print "Total spheres:\n{0}".format( self.spheres );
+		betti 	   		   = betti_number(total_triangle_set, total_edges.keys(), edge_tri_dict);
 		
 		print betti
 
-		if betti <= 0:						# If it will not increase the 1-st betti number
+		if betti == 0:						# If it will not increase the 1-st betti number
 			self.spheres[sphere] = 1;		# add the sphere to the component
 			self.triangle_set = total_triangle_set;# update triangles in the component
-			self.edge_list = total_edges;	# update edges in the component.
+			self.edge_set     = total_edges;	# update edges in the component.
 			return True;					# Tell caller the sphere can be added to the component
+		del self.spheres[sphere];
 		return False;						# Tell caller the sphere cannot be added to the component
 
 	def render(self, surf, color):
@@ -180,15 +212,15 @@ class Contraction:
 		'''start from a sphere as the init of component, contract its neighbors as much as possible'''
 		component = Component(sphere);					# Start from the initial sphere
 		used_spheres[sphere] = 1;
+		print '---------------------------------------------'
 		print sphere
 		find_new_sphere = True;							# Mark if we keep finding new spheres
 
 		while find_new_sphere:							# Loop until we can't find any new spheres to add
 														# Find all neighbor spheres ( such that they are not used in any components )
-			
 			component.render(self.surface, (0,250,0));
 			pygame.display.update();
-			time.sleep(1);
+			#time.sleep(1);
 
 			neighbors = self.component_neighbor_spheres(component, used_spheres, sphere_tri_dict);  
 			find_new_sphere = False;
@@ -197,16 +229,17 @@ class Contraction:
 					continue;
 				pygame.draw.circle( self.surface, (250,0,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
 				pygame.display.update();
-				time.sleep(0.5)
-				print "testing {0}".format(neighbor);
-				if component.add_sphere(neighbor, edge_tri_dict):	# if it can be added to the current component, add it.
+				#time.sleep(0.5)
+				#print "testing {0}".format(neighbor);
+				if component.add_sphere(neighbor, edge_tri_dict, sphere_tri_dict, self.surface):	# if it can be added to the current component, add it.
 					used_spheres[neighbor] = 1;						# mark the sphere as used
 					find_new_sphere = True;							# Yes, we've found a new sphere. Keep looping.
 					print "Good!"
+					component.render(self.surface, (0,250,0));
 					pygame.draw.circle( self.surface, (0,250,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
 					pygame.display.update();
-				
-				time.sleep(1);
+
+				#time.sleep(1);
 
 		return component;
 

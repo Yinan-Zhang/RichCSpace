@@ -47,8 +47,10 @@ def main():
 	pygame.display.update();
 
 	print 'Start Loading'
-	sphere_list = load_data('../sampling/experiments/experiment2.txt', 'L2');
+	sphere_list = load_data('../sampling/experiments/experiment.txt', 'L2');
 	print 'Start Rendering Spheres'
+	for sphere in sphere_list:
+		pygame.draw.circle( DISPLAYSURF, (200, 200, 200), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 1 );
 	
 	triangulator = Triangulator(sphere_list);
 
@@ -66,7 +68,7 @@ def main():
 	for comp in components:
 		color = (160/len(components) * i, 200/len(components) * i, 100/len(components) * i );
 		comp.render(DISPLAYSURF, color);
-		print comp.get_spheres();
+		#print comp.get_spheres();
 		i+=1
 
 	pygame.display.update();
