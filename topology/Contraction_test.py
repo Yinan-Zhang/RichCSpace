@@ -8,6 +8,23 @@ from Contraction		import *
 from l1_geometry		import *
 from hyper_graph		import *
 from Triangle 			import *
+from geometry 			import *
+
+def contains(s, pnt):
+	return (s.center[0]-pnt[0])**2 + (s.center[1]-pnt[1])**2 < s.radius**2;
+
+def get_path_nodes(path, spheres):
+	i = 0;
+	sphlist = [];
+	for i in range(len(path)-1):
+		dir = v2(path[i+1][0]-path[i][0], path[i+1][1]-path[i][1]) / 50.0;
+		for j in range(1, 51):
+			pnt = v2(path[i][0], path[i][1]) + j*dir;
+			for s in spheres:
+				if contains(s, pnt):
+					sphlist.append( s );
+					
+	return sphlist;
 
 def load_data(filename, mode):
 	'''load spheres information from file'''
@@ -35,6 +52,15 @@ def draw_triangles(surf, triangle_set, color = (200,200, 200)):
 		pygame.draw.polygon(surf, color, points, 1);
 	pygame.display.update();
 
+def draw_circles(surf, color, spheres):
+	for sphere in spheres:
+		pygame.draw.circle( surf, color, (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 4 );
+	pygame.display.update()
+
+def draw_path(surf, color, path ):
+	for i in range(len(path)-1):
+		pygame.draw.line(surf, color, path[i], path[i+1], 5);
+	pygame.display.update()
 
 def main():
 
@@ -51,15 +77,21 @@ def main():
 	print 'Start Rendering Spheres'
 	for sphere in sphere_list:
 		pygame.draw.circle( DISPLAYSURF, (200, 200, 200), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 1 );
-	
+
+	pygame.display.update();
+
+	##################################################
+	######        Triangulate sphere centers
 	triangulator = Triangulator(sphere_list);
 
 	triangle_set, sphere_tri_dict, edge_tri_dict = triangulator.triangulate();
 
 	draw_triangles(DISPLAYSURF, triangle_set);
 
-	contractor = Contraction(sphere_list, DISPLAYSURF);
 
+	##################################################
+	######        Contruct components
+	contractor = Contraction(sphere_list, DISPLAYSURF);
 	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
 	print "Got {0} component(s)".format(len(components))
@@ -73,7 +105,46 @@ def main():
 
 	pygame.display.update();
 
-	pygame.image.save(DISPLAYSURF, "components.PNG")
+
+
+	##################################################
+	######        Contruct Path
+	path1 = [ (214, 261), (458, 257) ]
+	path2 = [ (214, 261), (345, 290), (458, 257) ]
+	path3 = [ (214, 261), (271, 431), (404, 404), (458, 257) ]
+
+	untouchable1 = get_path_nodes(path1, sphere_list)
+	untouchable2 = get_path_nodes(path2, sphere_list)
+	untouchable3 = get_path_nodes(path3, sphere_list)
+
+	draw_path(DISPLAYSURF, (0,0,250), path1);
+	draw_path(DISPLAYSURF, (0,0,250), path2);
+	draw_path(DISPLAYSURF, (0,0,250), path3);
+	draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
+	draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
+	draw_circles(DISPLAYSURF, (150, 150, 250), untouchable3);
+	pygame.display.update();
+	#pygame.image.save(DISPLAYSURF, "homotopy.PNG")
+	#return;
+	
+ 
+	##################################################
+	######        determine path homotopy
+	new_comp = components[0].merge(components[1],edge_tri_dict, sphere_tri_dict)
+
+	untouchable = {}
+	for s in untouchable1:
+		untouchable[s] = 1;
+	for s in untouchable3:
+		untouchable[s] = 1;
+
+	betti = new_comp.remove_spheres(untouchable, edge_tri_dict, sphere_tri_dict, DISPLAYSURF);
+	if betti == 0:
+		print "!!!!!!!! Same Homotopy"
+	else:
+		print "~~~~~~~~ Different Homotopy"
+
+	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 
 
 

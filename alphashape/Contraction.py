@@ -91,6 +91,8 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 
 	print "---- Betti Number ----"
 	#print "matrix:\n{0}".format(matrix);
+
+	print "Triangles: {0}".format(len(triangle_list));
 	print "edges: {0}".format(len(edge_list));
 	print "vertices: {0}".format(len(vertices));
 	rank = GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
@@ -114,15 +116,58 @@ class Component:
 	def betti_number(self, edge_tri_dict):
 		return betti_number(self.triangle_set, self.edge_set.keys(), edge_tri_dict);
 
-	def merge(self, other):
+
+	def __new_tirsNedges__(self, sphere, edge_tri_dict, sphere_tri_dict):
+		new_triangles = {};
+		new_edges = {};
+		self.spheres[sphere] = 1;
+
+		candidate_triangles = sphere_tri_dict[sphere];
+		i = 1;
+		for tri in candidate_triangles:
+			if new_triangles.has_key(tri) and self.triangle_set.has_key(tri):
+				continue;
+			# all vertices in the triangle are in the component;
+			valid = True;
+			for s in tri.spheres:
+				if not self.spheres.has_key(s):
+					valid = False;
+			if not valid:
+				continue;
+			new_triangles[tri] = 1;
+
+			# add edges of the triangle to our component
+			for v1, v2 in tri.edges():
+				if (not self.edge_set.has_key((v1, v2)) and not self.edge_set.has_key((v2, v1))) and ( not new_edges.has_key( (v2, v1)) and not new_edges.has_key( (v2, v1) ) ):
+					new_edges[ (v1, v2) ] = 1;
+
+		# Get new edges that might be added to the component
+		for ball in self.spheres.keys(): 			# This step could be slow!!! (If the component has too many spheres already)
+			if ball.intersects(sphere) and not new_edges.has_key((ball, sphere)) and not new_edges.has_key((sphere,ball)):
+				if edge_tri_dict.has_key( (ball, sphere) ) or edge_tri_dict.has_key((sphere, ball)):
+					new_edges[(ball, sphere)] = 1;
+
+		del self.spheres[sphere];
+
+		return new_edges, new_triangles;
+
+	def merge(self, other, edge_tri_dict, sphere_tri_dict):
 		'''merge two components, the 1st betti number doesn't hanve to be 0 any more.'''
-		total_spheres = dict(self.spheres.items()+other.spheres);
-		total_edge_set = dict( self.edge_set.items() + other.edge_set.items() );
-		total_triangle_set = dict( self.triangle_set.items() + other.triangle_set.items() );
+		total_spheres = dict(self.spheres.items());
+		total_edge_set = dict( self.edge_set.items());
+		total_triangle_set = dict( self.triangle_set.items());
+		
+		for s in other.spheres.keys():
+			new_edges, new_tris = self.__new_tirsNedges__(s, edge_tri_dict, sphere_tri_dict)
+			total_edge_set = dict(total_edge_set.items() + new_edges.items())
+			total_triangle_set = dict( total_triangle_set.items() + new_tris.items() )
+
 		new_comp = Component();
 		new_comp.spheres = total_spheres;
 		new_comp.edge_set = total_edge_set;
 		new_comp.triangle_set = total_triangle_set;
+
+		print "Merged Total Triangles: {0}".format(len(total_triangle_set))
 		return new_comp;
 
 	def remove_sphere(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict):
@@ -149,18 +194,31 @@ class Component:
 		else:
 			return True; 
 
-	def remove_spheres(self, untouchable, edge_tri_dict, sphere_tri_dict ):
+	def remove_spheres(self, untouchable, edge_tri_dict, sphere_tri_dict, surf ):
+		print "========== Start Removing spheres ==========="
 		# Get original betti number
 		betti = self.betti_number(edge_tri_dict);
+		print 'Original betti {0}'.format(betti)
 		remove_one = True;   # If we can remove one sphere
-		while betti > 0 and remove_one = True:
+		while betti > 0 and remove_one:
 			remove_one = False;
-			for sphere in self.spheres:
-				if untouchable.has_key(sphere):   # don't touch untouchable spheres
+			for sphere in self.spheres.keys():
+				if betti == 0:
+					return betti
+				if untouchable.has_key(sphere) :   # don't touch untouchable spheres
 					continue;
+				if not self.spheres.has_key(sphere): # already removed
+					continue;
+				pygame.draw.circle(surf, (0,0,255), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius));
+				pygame.display.update()
+				time.sleep(1)
 				if self.remove_sphere(sphere, betti, edge_tri_dict, sphere_tri_dict):
 					betti = self.betti_number(edge_tri_dict);
+					print betti
 					remove_one = True;
+					pygame.draw.circle(surf, (255,255,255), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius));
+					pygame.display.update();
+					time.sleep(1);
 		return betti;
 
 	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
