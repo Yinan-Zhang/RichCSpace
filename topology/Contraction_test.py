@@ -95,7 +95,7 @@ def main():
 	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
 	print "Got {0} component(s)".format(len(components))
-
+	'''
 	i = 1;
 	for comp in components:
 		color = (160/len(components) * i, 200/len(components) * i, 100/len(components) * i );
@@ -104,8 +104,8 @@ def main():
 		i+=1
 
 	pygame.display.update();
-
-
+	#time.sleep(5);
+	'''
 
 	##################################################
 	######        Contruct Path
@@ -119,11 +119,12 @@ def main():
 
 	draw_path(DISPLAYSURF, (0,0,250), path1);
 	draw_path(DISPLAYSURF, (0,0,250), path2);
-	draw_path(DISPLAYSURF, (0,0,250), path3);
-	draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
-	draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
-	draw_circles(DISPLAYSURF, (150, 150, 250), untouchable3);
+	#draw_path(DISPLAYSURF, (0,0,250), path3);
+	#draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
+	#draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
+	#draw_circles(DISPLAYSURF, (150, 150, 250), untouchable3);
 	pygame.display.update();
+	time.sleep(1);
 	#pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 	#return;
 	
@@ -135,7 +136,7 @@ def main():
 	untouchable = {}
 	for s in untouchable1:
 		untouchable[s] = 1;
-	for s in untouchable3:
+	for s in untouchable2:
 		untouchable[s] = 1;
 
 	betti = new_comp.remove_spheres(untouchable, edge_tri_dict, sphere_tri_dict, DISPLAYSURF);

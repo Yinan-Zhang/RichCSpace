@@ -149,6 +149,7 @@ class Component:
 
 		del self.spheres[sphere];
 
+		print "Add {0} new triangles".format(len(new_triangles))
 		return new_edges, new_triangles;
 
 	def merge(self, other, edge_tri_dict, sphere_tri_dict):
@@ -211,14 +212,14 @@ class Component:
 					continue;
 				pygame.draw.circle(surf, (0,0,255), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius));
 				pygame.display.update()
-				time.sleep(1)
+				time.sleep(0.3)
 				if self.remove_sphere(sphere, betti, edge_tri_dict, sphere_tri_dict):
 					betti = self.betti_number(edge_tri_dict);
 					print betti
 					remove_one = True;
 					pygame.draw.circle(surf, (255,255,255), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius));
 					pygame.display.update();
-					time.sleep(1);
+					time.sleep(0.3);
 		return betti;
 
 	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
@@ -244,23 +245,23 @@ class Component:
 			if not valid:
 				continue;
 			new_triangles[tri] = 1;
-			draw_triangle(tri, surf, (0,250,0));
-			pygame.display.update();
+			#draw_triangle(tri, surf, (0,250,0));
+			#pygame.display.update();
 
 			# add edges of the triangle to our component
 			for v1, v2 in tri.edges():
 				if (not self.edge_set.has_key((v1, v2)) and not self.edge_set.has_key((v2, v1))) and ( not new_edges.has_key( (v2, v1)) and not new_edges.has_key( (v2, v1) ) ):
 					new_edges[ (v1, v2) ] = 1;
-					pygame.draw.line( surf, (255,0,0), (int(v1.center[0]),int(v1.center[1])), (int(v2.center[0]),int(v2.center[1])), 2 )
-					pygame.display.update();
+					#pygame.draw.line( surf, (255,0,0), (int(v1.center[0]),int(v1.center[1])), (int(v2.center[0]),int(v2.center[1])), 2 )
+					#pygame.display.update();
 
 		# Get new edges that might be added to the component
 		for ball in self.spheres.keys(): 			# This step could be slow!!! (If the component has too many spheres already)
 			if ball.intersects(sphere) and not new_edges.has_key((ball, sphere)) and not new_edges.has_key((sphere,ball)):
 				if edge_tri_dict.has_key( (ball, sphere) ) or edge_tri_dict.has_key((sphere, ball)):
 					new_edges[(ball, sphere)] = 1;
-					pygame.draw.line( surf, (255,0,0), (int(ball.center[0]),int(ball.center[1])), (int(sphere.center[0]),int(sphere.center[1])), 2 )
-					pygame.display.update();
+					#pygame.draw.line( surf, (255,0,0), (int(ball.center[0]),int(ball.center[1])), (int(sphere.center[0]),int(sphere.center[1])), 2 )
+					#pygame.display.update();
 		
 
 		# Now we have distinct new edges and new triangles while add a new sphere
@@ -287,9 +288,9 @@ class Component:
 		for sphere in self.get_spheres():
 			pygame.draw.circle( surf, color, (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 2 );
 		
-		for triangle in self.triangle_set.keys():
-			points = [ (int(triangle.spheres[0].center[0]), int(triangle.spheres[0].center[1]) ), (int(triangle.spheres[1].center[0]), int(triangle.spheres[1].center[1]) ), ( int(triangle.spheres[2].center[0]), int(triangle.spheres[2].center[1] )) ];
-			pygame.draw.polygon(surf, color, points, 0);
+		#for triangle in self.triangle_set.keys():
+		#	points = [ (int(triangle.spheres[0].center[0]), int(triangle.spheres[0].center[1]) ), (int(triangle.spheres[1].center[0]), int(triangle.spheres[1].center[1]) ), ( int(triangle.spheres[2].center[0]), int(triangle.spheres[2].center[1] )) ];
+		#	pygame.draw.polygon(surf, color, points, 0);
 		pass;	
 
 class Contraction:
