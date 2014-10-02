@@ -90,7 +90,7 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 		i += 1
 
 	print "---- Betti Number ----"
-	print "matrix:\n{0}".format(matrix);
+	#print "matrix:\n{0}".format(matrix);
 	print "edges: {0}".format(len(edge_list));
 	print "vertices: {0}".format(len(vertices));
 	rank = GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
@@ -100,15 +100,68 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 class Component:
 	'''Define a 'component' as a set of spheres, such that there is no 1-d holes.
 	meaning the first betti number is 0 '''
-	def __init__(self, init_ball):
+	def __init__(self, init_ball = None):
 		'''A component should at least have one ball'''
 		self.spheres = {}
-		self.spheres[init_ball] = 1;
+		if init_ball != None:
+			self.spheres[init_ball] = 1;
 		self.edge_set = {};
 		self.triangle_set = {};
 
 	def get_spheres(self):
 		return self.spheres.keys();
+
+	def betti_number(self, edge_tri_dict):
+		return betti_number(self.triangle_set, self.edge_set.keys(), edge_tri_dict);
+
+	def merge(self, other):
+		'''merge two components, the 1st betti number doesn't hanve to be 0 any more.'''
+		total_spheres = dict(self.spheres.items()+other.spheres);
+		total_edge_set = dict( self.edge_set.items() + other.edge_set.items() );
+		total_triangle_set = dict( self.triangle_set.items() + other.triangle_set.items() );
+		new_comp = Component();
+		new_comp.spheres = total_spheres;
+		new_comp.edge_set = total_edge_set;
+		new_comp.triangle_set = total_triangle_set;
+		return new_comp;
+
+	def remove_sphere(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict):
+		rmed_edges = [];
+		rmed_tris  = [];
+		del self.spheres[sphere];			# delete sphere
+		for edge in self.edge_set.keys():	# delete edge with sphere as a vertex
+			if edge[0] == sphere or edge[1] == sphere:
+				rmed_edges.append(edge);
+				del self.edge_set[edge];
+
+		for tri in self.triangle_set.keys():# delete triangle that contains the sphere
+			if sphere in tri.spheres:
+				rmed_tris.append(tri);
+				del self.triangle_set[tri];
+
+		if self.betti_number(edge_tri_dict) > old_betti:   # If can't be removed.
+			for edge in rmed_edges:				# add edges back
+				self.edge_set[edge] = 1;
+			for tri in rmed_tris:				# add triangles back
+				self.triangle_set[tri] = 1;
+			self.spheres[sphere] = 1;			# add sphere back
+			return False;
+		else:
+			return True; 
+
+	def remove_spheres(self, untouchable, edge_tri_dict, sphere_tri_dict ):
+		# Get original betti number
+		betti = self.betti_number(edge_tri_dict);
+		remove_one = True;   # If we can remove one sphere
+		while betti > 0 and remove_one = True:
+			remove_one = False;
+			for sphere in self.spheres:
+				if untouchable.has_key(sphere):   # don't touch untouchable spheres
+					continue;
+				if self.remove_sphere(sphere, betti, edge_tri_dict, sphere_tri_dict):
+					betti = self.betti_number(edge_tri_dict);
+					remove_one = True;
+		return betti;
 
 	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
 		'''determine if we can add a sphere to the component without increasing the 1-st betti number'''
