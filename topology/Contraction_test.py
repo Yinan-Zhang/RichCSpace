@@ -9,22 +9,23 @@ from l1_geometry		import *
 from hyper_graph		import *
 from Triangle 			import *
 from geometry 			import *
+from Homotopy 			import *
 
 def contains(s, pnt):
 	return (s.center[0]-pnt[0])**2 + (s.center[1]-pnt[1])**2 < s.radius**2;
 
 def get_path_nodes(path, spheres):
 	i = 0;
-	sphlist = [];
+	sphlist = {};
 	for i in range(len(path)-1):
 		dir = v2(path[i+1][0]-path[i][0], path[i+1][1]-path[i][1]) / 50.0;
 		for j in range(1, 51):
 			pnt = v2(path[i][0], path[i][1]) + j*dir;
 			for s in spheres:
 				if contains(s, pnt):
-					sphlist.append( s );
+					sphlist[s] = 1;
 					
-	return sphlist;
+	return sphlist.keys();
 
 def load_data(filename, mode):
 	'''load spheres information from file'''
@@ -75,8 +76,10 @@ def main():
 	print 'Start Loading'
 	sphere_list = load_data('../sampling/experiments/experiment.txt', 'L2');
 	print 'Start Rendering Spheres'
+	spheres = {}
 	for sphere in sphere_list:
-		pygame.draw.circle( DISPLAYSURF, (200, 200, 200), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 1 );
+		spheres[sphere] = 1;
+		#pygame.draw.circle( DISPLAYSURF, (200, 200, 200), (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 1 );
 
 	pygame.display.update();
 
@@ -86,15 +89,15 @@ def main():
 
 	triangle_set, sphere_tri_dict, edge_tri_dict = triangulator.triangulate();
 
-	draw_triangles(DISPLAYSURF, triangle_set);
+	#draw_triangles(DISPLAYSURF, triangle_set);
 
 
 	##################################################
 	######        Contruct components
 	contractor = Contraction(sphere_list, DISPLAYSURF);
-	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
+	#components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
-	print "Got {0} component(s)".format(len(components))
+	#print "Got {0} component(s)".format(len(components))
 	'''
 	i = 1;
 	for comp in components:
@@ -131,6 +134,7 @@ def main():
  
 	##################################################
 	######        determine path homotopy
+	'''
 	new_comp = components[0].merge(components[1],edge_tri_dict, sphere_tri_dict)
 
 	untouchable = {}
@@ -146,8 +150,29 @@ def main():
 		print "~~~~~~~~ Different Homotopy"
 
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
+	'''
+
+	print untouchable1;
+	print untouchable2;
+
+	union1 = SphereUnion(untouchable1[0]);	untouchable1.remove(untouchable1[0]);
+	union2 = SphereUnion(untouchable2[0]);	untouchable2.remove(untouchable2[0]);
+	while len(untouchable1) != 0:
+		for sphere in untouchable1:
+			if union1.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
+				untouchable1.remove(sphere)
+
+	while len(untouchable2) != 0:
+		for sphere in untouchable2:
+			if union2.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
+				untouchable2.remove(sphere)
 
 
+	print len(union1.get_spheres()), len(untouchable1)
+
+	csp = HomotopyCSP(spheres, contractor.graph, triangle_set, edge_tri_dict, sphere_tri_dict);
+	csp.greedy( union1, union2, DISPLAYSURF );
+	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 
 if __name__ == '__main__':
 	main();

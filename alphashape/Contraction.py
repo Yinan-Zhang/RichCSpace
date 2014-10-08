@@ -89,19 +89,17 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 				matrix[i, j] = 1;
 		i += 1
 
-	print "---- Betti Number ----"
+	#print "---- Betti Number ----"
 	#print "matrix:\n{0}".format(matrix);
 
-	print "Triangles: {0}".format(len(triangle_list));
-	print "edges: {0}".format(len(edge_list));
-	print "vertices: {0}".format(len(vertices));
+	#print "Triangles: {0}".format(len(triangle_list));
+	#print "edges: {0}".format(len(edge_list));
+	#print "vertices: {0}".format(len(vertices));
 	rank = GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
 	return len(edge_list) - len(vertices) + 1 - rank;
 
-
-class Component:
-	'''Define a 'component' as a set of spheres, such that there is no 1-d holes.
-	meaning the first betti number is 0 '''
+class SphereUnion:
+	'''A sphere union is a set of intersecting spheres'''
 	def __init__(self, init_ball = None):
 		'''A component should at least have one ball'''
 		self.spheres = {}
@@ -116,6 +114,10 @@ class Component:
 	def betti_number(self, edge_tri_dict):
 		return betti_number(self.triangle_set, self.edge_set.keys(), edge_tri_dict);
 
+	def render(self, surf, color):
+		for sphere in self.get_spheres():
+			pygame.draw.circle( surf, color, (int(sphere.center[0]), int(sphere.center[1])), int(sphere.radius), 2 );
+		pygame.display.update();
 
 	def __new_tirsNedges__(self, sphere, edge_tri_dict, sphere_tri_dict):
 		new_triangles = {};
@@ -149,7 +151,7 @@ class Component:
 
 		del self.spheres[sphere];
 
-		print "Add {0} new triangles".format(len(new_triangles))
+		#print "Add {0} new triangles".format(len(new_triangles))
 		return new_edges, new_triangles;
 
 	def merge(self, other, edge_tri_dict, sphere_tri_dict):
@@ -163,7 +165,7 @@ class Component:
 			total_edge_set = dict(total_edge_set.items() + new_edges.items())
 			total_triangle_set = dict( total_triangle_set.items() + new_tris.items() )
 
-		new_comp = Component();
+		new_comp = SphereUnion();
 		new_comp.spheres = total_spheres;
 		new_comp.edge_set = total_edge_set;
 		new_comp.triangle_set = total_triangle_set;
@@ -222,6 +224,76 @@ class Component:
 					time.sleep(0.3);
 		return betti;
 
+	def add_sphere_betti(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict, surf = None):
+		'''returns the 1st betti number if adding a sphere'''
+		if self.spheres.has_key(sphere):
+			return False;
+			#raise Exception('You got a bug, the sphere is already in the component');
+		self.spheres[sphere] = 1;
+
+		new_triangles = {};
+		new_edges = {};
+
+		candidate_triangles = sphere_tri_dict[sphere];
+		i = 1;
+		for tri in candidate_triangles:
+			if new_triangles.has_key(tri) and self.triangle_set.has_key(tri):
+				continue;
+			# all vertices in the triangle are in the component;
+			valid = True;
+			for s in tri.spheres:
+				if not self.spheres.has_key(s):
+					valid = False;
+			if not valid:
+				continue;
+			new_triangles[tri] = 1;
+			#draw_triangle(tri, surf, (0,250,0));
+			#pygame.display.update();
+
+			# add edges of the triangle to our component
+			for v1, v2 in tri.edges():
+				if (not self.edge_set.has_key((v1, v2)) and not self.edge_set.has_key((v2, v1))) and ( not new_edges.has_key( (v2, v1)) and not new_edges.has_key( (v2, v1) ) ):
+					new_edges[ (v1, v2) ] = 1;
+					#pygame.draw.line( surf, (255,0,0), (int(v1.center[0]),int(v1.center[1])), (int(v2.center[0]),int(v2.center[1])), 2 )
+					#pygame.display.update();
+
+		# Get new edges that might be added to the component
+		for ball in self.spheres.keys(): 			# This step could be slow!!! (If the component has too many spheres already)
+			if ball.intersects(sphere) and not new_edges.has_key((ball, sphere)) and not new_edges.has_key((sphere,ball)):
+				if edge_tri_dict.has_key( (ball, sphere) ) or edge_tri_dict.has_key((sphere, ball)):
+					new_edges[(ball, sphere)] = 1;
+					#pygame.draw.line( surf, (255,0,0), (int(ball.center[0]),int(ball.center[1])), (int(sphere.center[0]),int(sphere.center[1])), 2 )
+					#pygame.display.update();
+		
+
+		# Now we have distinct new edges and new triangles while add a new sphere
+		# Add them up.
+		total_triangle_set = dict(self.triangle_set.items() + new_triangles.items());
+		total_edges 	   = dict(self.edge_set.items() + new_edges.items());
+		# Time to determine the betti number.
+		#print "Total Triangle Set:\n {0}".format(total_triangle_set);
+		#print "Total Edge Set: {0}".format(total_edges);
+		#print "Total spheres:\n{0}".format( self.spheres );
+		betti 	   		   = betti_number(total_triangle_set, total_edges.keys(), edge_tri_dict);
+		
+		#print "Betti number adding a sphere: {0}".format(betti);
+
+		if betti <= old_betti:				# If it will not increase the 1-st betti number
+			self.spheres[sphere] = 1;		# add the sphere to the component
+			self.triangle_set = total_triangle_set;# update triangles in the component
+			self.edge_set     = total_edges;	# update edges in the component.
+			return True;					# Tell caller the sphere can be added to the component
+		del self.spheres[sphere];
+		return False;						# Tell caller the sphere cannot be added to the component	
+
+class Component(SphereUnion):
+	'''Define a 'component' as a set of spheres, such that there is no 1-d holes.
+	meaning the first betti number is 0 '''
+	def __init__(self, init_ball = None):
+		'''A component should at least have one ball'''
+		SphereUnion.__init__(self, init_ball=None);
+
+
 	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
 		'''determine if we can add a sphere to the component without increasing the 1-st betti number'''
 		if self.spheres.has_key(sphere):
@@ -274,7 +346,7 @@ class Component:
 		#print "Total spheres:\n{0}".format( self.spheres );
 		betti 	   		   = betti_number(total_triangle_set, total_edges.keys(), edge_tri_dict);
 		
-		print betti
+		print "Betti number after adding the sphere: {0}".format(betti)
 
 		if betti == 0:						# If it will not increase the 1-st betti number
 			self.spheres[sphere] = 1;		# add the sphere to the component
@@ -325,7 +397,6 @@ class Contraction:
 		component = Component(sphere);					# Start from the initial sphere
 		used_spheres[sphere] = 1;
 		print '---------------------------------------------'
-		print sphere
 		find_new_sphere = True;							# Mark if we keep finding new spheres
 
 		while find_new_sphere:							# Loop until we can't find any new spheres to add

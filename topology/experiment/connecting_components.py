@@ -9,6 +9,7 @@ from hyper_geometry 	import *
 from hyper_alpha_shape 	import *
 from l1_geometry 		import *
 from hyper_graph 		import *
+from Homotopy 			import *
 
 def load_data(filename, mode):
 	'''load spheres information from file'''
