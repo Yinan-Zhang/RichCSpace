@@ -22,7 +22,7 @@ def get_path_nodes(path, spheres):
 		for j in range(1, 51):
 			pnt = v2(path[i][0], path[i][1]) + j*dir;
 			for s in spheres:
-				if contains(s, pnt):
+				if contains(s, pnt) and not sphlist.has_key(s):
 					sphlist[s] = 1;
 					
 	return sphlist.keys();
@@ -95,9 +95,9 @@ def main():
 	##################################################
 	######        Contruct components
 	contractor = Contraction(sphere_list, DISPLAYSURF);
-	#components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
+	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
-	#print "Got {0} component(s)".format(len(components))
+	print "Got {0} component(s)".format(len(components))
 	'''
 	i = 1;
 	for comp in components:
@@ -109,7 +109,6 @@ def main():
 	pygame.display.update();
 	#time.sleep(5);
 	'''
-
 	##################################################
 	######        Contruct Path
 	path1 = [ (214, 261), (458, 257) ]
@@ -121,8 +120,8 @@ def main():
 	untouchable3 = get_path_nodes(path3, sphere_list)
 
 	draw_path(DISPLAYSURF, (0,0,250), path1);
-	draw_path(DISPLAYSURF, (0,0,250), path2);
-	#draw_path(DISPLAYSURF, (0,0,250), path3);
+	#draw_path(DISPLAYSURF, (0,0,250), path2);
+	draw_path(DISPLAYSURF, (0,0,250), path3);
 	#draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
 	#draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
 	#draw_circles(DISPLAYSURF, (150, 150, 250), untouchable3);
@@ -134,7 +133,7 @@ def main():
  
 	##################################################
 	######        determine path homotopy
-	'''
+	
 	new_comp = components[0].merge(components[1],edge_tri_dict, sphere_tri_dict)
 
 	untouchable = {}
@@ -150,25 +149,22 @@ def main():
 		print "~~~~~~~~ Different Homotopy"
 
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
-	'''
-
-	print untouchable1;
-	print untouchable2;
+	return;
 
 	union1 = SphereUnion(untouchable1[0]);	untouchable1.remove(untouchable1[0]);
-	union2 = SphereUnion(untouchable2[0]);	untouchable2.remove(untouchable2[0]);
+	union2 = SphereUnion(untouchable3[0]);	untouchable3.remove(untouchable3[0]);
 	while len(untouchable1) != 0:
 		for sphere in untouchable1:
 			if union1.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
 				untouchable1.remove(sphere)
 
-	while len(untouchable2) != 0:
-		for sphere in untouchable2:
+	while len(untouchable3) != 0:
+		for sphere in untouchable3:
 			if union2.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
-				untouchable2.remove(sphere)
+				untouchable3.remove(sphere)
 
 
-	print len(union1.get_spheres()), len(untouchable1)
+	print len(union2.get_spheres()), len(untouchable1)
 
 	csp = HomotopyCSP(spheres, contractor.graph, triangle_set, edge_tri_dict, sphere_tri_dict);
 	csp.greedy( union1, union2, DISPLAYSURF );

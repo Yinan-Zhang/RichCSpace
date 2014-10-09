@@ -22,8 +22,8 @@ def inside(sphere, point):
 	@param point: (x,y)'''
 	if (sphere[0]-point[0])**2 + (sphere[1]-point[1])**2 < (sphere[2]*1)**2:
 		return True;
-	if point[0] <= 400 and point[0] >= 300 and point[1] <= 400 and point[1] >= 300:
-		return True;
+	#if point[0] <= 400 and point[0] >= 300 and point[1] <= 400 and point[1] >= 300:
+	#	return True;
 
 def sample_one(n, samples):
 	global width;
@@ -76,7 +76,7 @@ def main():
 	pygame.display.update();
 
 	pygame.image.save( DISPLAYSURF, 'experiment.PNG' );
-	save_data(spheres, 'experiment.txt')
+	save_data(spheres, 'experiment3.txt')
 
 if __name__ == '__main__':
 	main()
