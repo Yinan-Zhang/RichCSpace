@@ -219,7 +219,7 @@ class Component:
 
 		return new_comp;
 
-	def remove_sphere(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict):
+	def remove_sphere(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict, force = False):
 		rmed_edges = [];
 		rmed_tris  = [];
 		del self.spheres[sphere];			# delete sphere
@@ -233,7 +233,7 @@ class Component:
 				rmed_tris.append(tri);
 				del self.triangle_set[tri];
 
-		if self.betti_number(edge_tri_dict) > old_betti:   # If can't be removed.
+		if self.betti_number(edge_tri_dict) > old_betti and not force:   # If it increases the betti number and is not forced to remove the sphere
 			for edge in rmed_edges:				# add edges back
 				self.edge_set[edge] = 1;
 			for tri in rmed_tris:				# add triangles back

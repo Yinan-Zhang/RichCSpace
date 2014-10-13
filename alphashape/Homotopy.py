@@ -71,7 +71,7 @@ class HomotopyCSP:
 		if len(neighbors) == 0:
 			pass;   #### Think about this
 		for neighbor in neighbors:
-			heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union1) );
+			heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union2) );
 
 		while not heuristic.isEmpty():
 			choice = heuristic.pop()
@@ -92,7 +92,7 @@ class HomotopyCSP:
 				temp = Component( choice );
 				new_neighbors = self.neighbor_spheres(temp, used_spheres)
 				for neighbor in new_neighbors:
-					heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union1) );
+					heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union2) );
 					break;
 			else:
 
@@ -106,3 +106,61 @@ class HomotopyCSP:
 			print "Same homotopy class"
 
 
+	def CSP( self, all_spheres, path1, path2 ):
+		'''Given n variables( spheres ) s[1..n] with available value 0 and 1. 
+		Solve the constraint satisfication problem of assigning variables such that:
+		1. either the assigned spheres have betti number 0
+		2. or there's no other spheres that can be added without increasing the betti number'''
+		path1cp = copy.copy(path1);
+		component = path1cp.merge(path2, self.edge_tri_dict, self.sphere_tri_dict);
+		for s in component.spheres.keys():
+			assigned[s] = 1;
+
+		return self.CSP_helper(all_spheres, assigned, component)
+
+
+	def CSP_helper( self, all_spheres, assigned, component ):
+		
+		
+		def dist(sphere, ball):
+			'''min_dist from a sphere to spheres on a union'''
+			min_dist = 100000000;
+			for s in union.get_spheres():
+				dist = (s.center - sphere.center).r();
+				if dist <= min_dist:
+					min_dist = dist;
+			return min_dist;
+
+		def heur( sphere, path1, path2 ):
+			'''returns the heuristic of the sphere'''
+			return dist(sphere, union1) + dist(sphere, union2);
+
+
+		idx = 0;
+		def select_next_unassigned():
+			'''returns the an unassigned variable'''
+			spheres = all_spheres.keys();
+			for i in range(idx, len(spheres)):
+				s = spheres[i]
+				if not assigned.has_key(s) and component.intersects(s):
+					idx += 1;
+					return s;
+				idx += 1;
+
+			return None;
+
+		old_betti = component.betti_number( self.edge_tri_dict );
+		if old_betti == 0:
+			return True; # Same homotopy
+
+		while True:
+			var = select_next_unassigned();
+			if var == None:
+				return False;
+			if component.add_sphere_betti(var, old_betti, self.edge_tri_dict, self.sphere_tri_dict):
+				assigned[var] = 1;
+				if not self.CSP_helper(all_spheres, assigned, component):
+					component.remove(var, old_betti, self.edge_tri_dict, self.sphere_tri_dict, True);
+				else:
+					return True;
+		pass;
