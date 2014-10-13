@@ -1,4 +1,4 @@
-import sys, os, math, pygame
+import sys, os, math, pygame, pdb
 sys.path.append('../basics/math')
 sys.path.append('../alphashape')
 
@@ -25,7 +25,7 @@ def get_path_nodes(path, spheres):
 				if contains(s, pnt) and not sphlist.has_key(s):
 					sphlist[s] = 1;
 					
-	return sphlist.keys();
+	return sphlist;
 
 def load_data(filename, mode):
 	'''load spheres information from file'''
@@ -74,7 +74,7 @@ def main():
 	pygame.display.update();
 
 	print 'Start Loading'
-	sphere_list = load_data('../sampling/experiments/experiment.txt', 'L2');
+	sphere_list = load_data('../sampling/experiments/experiment3.txt', 'L2');
 	print 'Start Rendering Spheres'
 	spheres = {}
 	for sphere in sphere_list:
@@ -89,15 +89,15 @@ def main():
 
 	triangle_set, sphere_tri_dict, edge_tri_dict = triangulator.triangulate();
 
-	#draw_triangles(DISPLAYSURF, triangle_set);
+	#draw_triangles(DISPLAYSURF, triangle_set, (100, 250, 100));
 
 
 	##################################################
 	######        Contruct components
 	contractor = Contraction(sphere_list, DISPLAYSURF);
-	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
+	#components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
-	print "Got {0} component(s)".format(len(components))
+	#print "Got {0} component(s)".format(len(components))
 	'''
 	i = 1;
 	for comp in components:
@@ -119,9 +119,9 @@ def main():
 	untouchable2 = get_path_nodes(path2, sphere_list)
 	untouchable3 = get_path_nodes(path3, sphere_list)
 
-	draw_path(DISPLAYSURF, (0,0,250), path1);
+	#draw_path(DISPLAYSURF, (0,0,250), path1);
 	#draw_path(DISPLAYSURF, (0,0,250), path2);
-	draw_path(DISPLAYSURF, (0,0,250), path3);
+	#draw_path(DISPLAYSURF, (0,0,250), path3);
 	#draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
 	#draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
 	#draw_circles(DISPLAYSURF, (150, 150, 250), untouchable3);
@@ -133,7 +133,7 @@ def main():
  
 	##################################################
 	######        determine path homotopy
-	
+	'''
 	new_comp = components[0].merge(components[1],edge_tri_dict, sphere_tri_dict)
 
 	untouchable = {}
@@ -141,7 +141,7 @@ def main():
 		untouchable[s] = 1;
 	for s in untouchable2:
 		untouchable[s] = 1;
-
+	
 	betti = new_comp.remove_spheres(untouchable, edge_tri_dict, sphere_tri_dict, DISPLAYSURF);
 	if betti == 0:
 		print "!!!!!!!! Same Homotopy"
@@ -150,21 +150,30 @@ def main():
 
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 	return;
+	'''
+	'''
+	union1 = Component(untouchable1[0]);	untouchable1.remove(untouchable1[0]);
+	union2 = Component(untouchable3[0]);	untouchable3.remove(untouchable3[0]);
 
-	union1 = SphereUnion(untouchable1[0]);	untouchable1.remove(untouchable1[0]);
-	union2 = SphereUnion(untouchable3[0]);	untouchable3.remove(untouchable3[0]);
 	while len(untouchable1) != 0:
 		for sphere in untouchable1:
-			if union1.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
+			if union1.intersects(sphere) and union1.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict, DISPLAYSURF):
+				pygame.draw.circle( DISPLAYSURF, (0,150, 0), ( int(sphere.center[0]), int(sphere.center[1]) ), int(sphere.radius), 1 )
 				untouchable1.remove(sphere)
+				time.sleep(0.5)
 
 	while len(untouchable3) != 0:
 		for sphere in untouchable3:
-			if union2.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict):
+			if union2.intersects(sphere) and union2.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict, DISPLAYSURF):
+				pygame.draw.circle( DISPLAYSURF, (0,150, 0), ( int(sphere.center[0]), int(sphere.center[1]) ), int(sphere.radius), 1 )
 				untouchable3.remove(sphere)
+				time.sleep(0.5)
+	'''
+	union1 = Component(); union1.construct( untouchable1, edge_tri_dict, sphere_tri_dict );
+	union2 = Component(); union2.construct( untouchable3, edge_tri_dict, sphere_tri_dict );
+	#union2.render(DISPLAYSURF, ( 200, 150, 150 )); pygame.display.update();
 
-
-	print len(union2.get_spheres()), len(untouchable1)
+	print len(union2.get_spheres()), len(untouchable3)
 
 	csp = HomotopyCSP(spheres, contractor.graph, triangle_set, edge_tri_dict, sphere_tri_dict);
 	csp.greedy( union1, union2, DISPLAYSURF );

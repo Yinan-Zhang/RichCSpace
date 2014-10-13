@@ -253,8 +253,8 @@ class SphereUnion:
 		new_triangles = {};
 		new_edges = {};
 
-		new_edges, new_triangles = self.__new_tirsNedges__(sphere, edge_tri_dict, sphere_tri_dict)
-		'''
+		#new_edges, new_triangles = self.__new_tirsNedges__(sphere, edge_tri_dict, sphere_tri_dict)
+		
 		candidate_triangles = sphere_tri_dict[sphere];
 		print "Num of triangles associated with sphere: {0}".format( len(candidate_triangles) )
 		i = 1;
@@ -287,7 +287,7 @@ class SphereUnion:
 					new_edges[(ball, sphere)] = 1;
 					#pygame.draw.line( surf, (255,0,0), (int(ball.center[0]),int(ball.center[1])), (int(sphere.center[0]),int(sphere.center[1])), 2 )
 					#pygame.display.update();
-		'''
+		
 
 		# Now we have distinct new edges and new triangles while add a new sphere
 		# Add them up.
@@ -316,8 +316,10 @@ class Component(SphereUnion):
 		'''A component should at least have one ball'''
 		SphereUnion.__init__(self, init_ball=None);
 
-
 	def add_sphere(self, sphere, edge_tri_dict, sphere_tri_dict, surf):
+		return self.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict, surf);
+
+	def add_sphere_betti(self, sphere, old_betti, edge_tri_dict, sphere_tri_dict, surf):
 		'''determine if we can add a sphere to the component without increasing the 1-st betti number'''
 		if self.spheres.has_key(sphere):
 			return False;
@@ -371,7 +373,7 @@ class Component(SphereUnion):
 		
 		print "Betti number after adding the sphere: {0}".format(betti)
 
-		if betti == 0:						# If it will not increase the 1-st betti number
+		if betti <= old_betti:						# If it will not increase the 1-st betti number
 			self.spheres[sphere] = 1;		# add the sphere to the component
 			self.triangle_set = total_triangle_set;# update triangles in the component
 			self.edge_set     = total_edges;	# update edges in the component.

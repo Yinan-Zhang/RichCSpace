@@ -6,7 +6,7 @@ This class is about determine two path homotopy classes using Constraint Satisfi
 __author__ = 'Yinan Zhang'
 __revision__ = '$Revision$'
 
-
+import pdb
 import sys, os, math, time, pygame, time, copy
 sys.path.append('../basics/math')
 sys.path.append('../basics/algorithm')
@@ -52,8 +52,9 @@ class HomotopyCSP:
 					min_dist = dist;
 			return min_dist;
 
-		union1.render( surface, (200,200,200) );	union2.render( surface, (200,200,200) );
-
+		
+		union1.render( surface, (200,200,200) );	union2.render( surface, (200,000,200) );
+		pygame.display.update();
 		used_spheres = {};
 		for sphere in union1.get_spheres():
 			used_spheres[sphere] = 1;
@@ -61,10 +62,11 @@ class HomotopyCSP:
 		for sphere in union2.get_spheres():
 			used_spheres[sphere] = 1;
 		
-		union1cp = copy.deepcopy( union1 );
+		union1cp = copy.copy( union1 );
 		union = union1cp.merge(union2, self.edge_tri_dict, self.sphere_tri_dict);
 		neighbors = self.neighbor_spheres(union1, used_spheres)
 		heuristic = PriorityQueue();
+		
 
 		if len(neighbors) == 0:
 			pass;   #### Think about this
@@ -75,10 +77,11 @@ class HomotopyCSP:
 			choice = heuristic.pop()
 			print choice
 			pygame.draw.circle( surface, (255,0,0), (int(choice.center[0]), int(choice.center[1])), int(choice.radius), 2 );
+			pygame.display.update()
 			time.sleep(1);
 			old_betti = union.betti_number(self.edge_tri_dict)
 			print "old betti number: {0}".format( old_betti )
-			good = union.add_sphere_betti(choice, old_betti, self.edge_tri_dict, self.sphere_tri_dict);
+			good = union.add_sphere_betti(choice, old_betti, self.edge_tri_dict, self.sphere_tri_dict, surface);
 			if good == None:
 				print "Same homotopy class";
 				return;
@@ -86,7 +89,7 @@ class HomotopyCSP:
 				union.render( surface, (200,200,200) );
 				time.sleep(1);
 				used_spheres[choice] = 1;
-				temp = SphereUnion( choice );
+				temp = Component( choice );
 				new_neighbors = self.neighbor_spheres(temp, used_spheres)
 				for neighbor in new_neighbors:
 					heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union1) );
