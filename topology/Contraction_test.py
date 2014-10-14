@@ -176,7 +176,11 @@ def main():
 	print len(union2.get_spheres()), len(untouchable3)
 
 	csp = HomotopyCSP(spheres, contractor.graph, triangle_set, edge_tri_dict, sphere_tri_dict);
-	csp.greedy( union1, union2, DISPLAYSURF );
+	#csp.greedy( union1, union2, DISPLAYSURF );
+	if csp.CSP(spheres, union1, union2, DISPLAYSURF):
+		print "Same homotopy"
+	else:
+		print "Different homotopy class"
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 
 if __name__ == '__main__':

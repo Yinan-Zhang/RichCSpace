@@ -52,7 +52,7 @@ class HomotopyCSP:
 					min_dist = dist;
 			return min_dist;
 
-		
+		pdb.set_trace();
 		union1.render( surface, (200,200,200) );	union2.render( surface, (200,000,200) );
 		pygame.display.update();
 		used_spheres = {};
@@ -106,21 +106,21 @@ class HomotopyCSP:
 			print "Same homotopy class"
 
 
-	def CSP( self, all_spheres, path1, path2 ):
+	def CSP( self, all_spheres, path1, path2, surf ):
 		'''Given n variables( spheres ) s[1..n] with available value 0 and 1. 
 		Solve the constraint satisfication problem of assigning variables such that:
 		1. either the assigned spheres have betti number 0
 		2. or there's no other spheres that can be added without increasing the betti number'''
 		path1cp = copy.copy(path1);
 		component = path1cp.merge(path2, self.edge_tri_dict, self.sphere_tri_dict);
+		assigned = {}
 		for s in component.spheres.keys():
 			assigned[s] = 1;
 
-		return self.CSP_helper(all_spheres, assigned, component)
+		return self.CSP_helper(all_spheres, assigned, component, surf)
 
 
-	def CSP_helper( self, all_spheres, assigned, component ):
-		
+	def CSP_helper( self, all_spheres, assigned, component, surf ):
 		
 		def dist(sphere, ball):
 			'''min_dist from a sphere to spheres on a union'''
@@ -135,31 +135,36 @@ class HomotopyCSP:
 			'''returns the heuristic of the sphere'''
 			return dist(sphere, union1) + dist(sphere, union2);
 
-
-		idx = 0;
-		def select_next_unassigned():
+		def select_next_unassigned(idx):
 			'''returns the an unassigned variable'''
 			spheres = all_spheres.keys();
 			for i in range(idx, len(spheres)):
 				s = spheres[i]
 				if not assigned.has_key(s) and component.intersects(s):
 					idx += 1;
-					return s;
+					return s, idx;
 				idx += 1;
 
 			return None;
 
+		pdb.set_trace();
 		old_betti = component.betti_number( self.edge_tri_dict );
+		print old_betti
 		if old_betti == 0:
 			return True; # Same homotopy
 
+		idx = 0;
 		while True:
-			var = select_next_unassigned();
+			pdb.set_trace()
+			component.render(surf, (150, 180, 230));
+			pygame.display.update();
+			var, idx = select_next_unassigned(idx);
 			if var == None:
 				return False;
-			if component.add_sphere_betti(var, old_betti, self.edge_tri_dict, self.sphere_tri_dict):
+			if component.add_sphere_betti(var, old_betti, self.edge_tri_dict, self.sphere_tri_dict, surf):
+				component.render(surf, (150, 180, 230));pygame.display.update();
 				assigned[var] = 1;
-				if not self.CSP_helper(all_spheres, assigned, component):
+				if not self.CSP_helper(all_spheres, assigned, component, surf):
 					component.remove(var, old_betti, self.edge_tri_dict, self.sphere_tri_dict, True);
 				else:
 					return True;
