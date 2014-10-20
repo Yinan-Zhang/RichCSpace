@@ -41,7 +41,23 @@ class HomotopyCSP:
 		print "Union neighbor spheres: {0}".format( len(neighbors) );
 		return neighbors;
 
-	def greedy( self, union1, union2, surface = None ):
+	def greedy( self, union1, union2, all_spheres, surface = None ):
+		''' Greedily grow spheres for a set of balls two paths go through, 
+		such that the growth will not increase the 1st betti number.
+		'''
+
+		def center( union1, union2 ):
+			center = None;
+			for s in union1.spheres:
+				if center is None:
+					center = copy.copy( s.center );
+				else:
+					center += s.center;
+			for s in union2.spheres:
+				center += s.center;
+
+			center /= ( len(union1.spheres) + len(union2.spheres) );
+			return center;
 
 		def dist(sphere, union):
 			'''min_dist from a sphere to spheres on a union'''
@@ -52,7 +68,14 @@ class HomotopyCSP:
 					min_dist = dist;
 			return min_dist;
 
-		pdb.set_trace();
+		def heur_dist( sphere, union1, union2 ):
+			'''returns the heuristic of the sphere'''
+			return dist(sphere, union1) + dist(sphere, union2);
+
+		def heur_cent( sphere, center ):
+			'''returns the heuristic of the sphere'''
+			return (sphere.center - center).r();
+
 		union1.render( surface, (200,200,200) );	union2.render( surface, (200,000,200) );
 		pygame.display.update();
 		used_spheres = {};
@@ -64,25 +87,27 @@ class HomotopyCSP:
 		
 		union1cp = copy.copy( union1 );
 		union = union1cp.merge(union2, self.edge_tri_dict, self.sphere_tri_dict);
-		neighbors = self.neighbor_spheres(union1, used_spheres)
+		neighbors = self.neighbor_spheres(union, used_spheres)
 		heuristic = PriorityQueue();
 		
 
 		if len(neighbors) == 0:
 			pass;   #### Think about this
 		for neighbor in neighbors:
-			heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union2) );
+			if not used_spheres.has_key(neighbor) and all_spheres.has_key(neighbor):
+				heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
 
-		while not heuristic.isEmpty():
+		pdb.set_trace();
+		while not heuristic.isEmpty() and not len(union.spheres) == len(all_spheres.keys()):
 			choice = heuristic.pop()
-			print choice
+			
 			pygame.draw.circle( surface, (255,0,0), (int(choice.center[0]), int(choice.center[1])), int(choice.radius), 2 );
 			pygame.display.update()
 			time.sleep(1);
 			old_betti = union.betti_number(self.edge_tri_dict)
 			print "old betti number: {0}".format( old_betti )
 			good = union.add_sphere_betti(choice, old_betti, self.edge_tri_dict, self.sphere_tri_dict, surface);
-			if good == None:
+			if old_betti == 0 or good == None:
 				print "Same homotopy class";
 				return;
 			if good:
@@ -92,11 +117,8 @@ class HomotopyCSP:
 				temp = Component( choice );
 				new_neighbors = self.neighbor_spheres(temp, used_spheres)
 				for neighbor in new_neighbors:
-					heuristic.push( neighbor, dist(neighbor, union1) + dist(neighbor, union2) );
-					break;
-			else:
-
-				heuristic.push( choice, dist(choice, union1) + dist(choice, union1) );
+					if not used_spheres.has_key(neighbor) and all_spheres.has_key(neighbor):
+						heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
 			
 		betti = union.betti_number(self.edge_tri_dict);
 		print betti

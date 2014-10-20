@@ -95,9 +95,9 @@ def main():
 	##################################################
 	######        Contruct components
 	contractor = Contraction(sphere_list, DISPLAYSURF);
-	#components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
+	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
-	#print "Got {0} component(s)".format(len(components))
+	print "Got {0} component(s)".format(len(components))
 	'''
 	i = 1;
 	for comp in components:
@@ -111,16 +111,16 @@ def main():
 	'''
 	##################################################
 	######        Contruct Path
-	path1 = [ (214, 261), (458, 257) ]
-	path2 = [ (214, 261), (345, 290), (458, 257) ]
-	path3 = [ (214, 261), (271, 431), (404, 404), (458, 257) ]
+	path1 = [ (159, 147), (470, 106) ]
+	path2 = [ (159, 147), (190, 263), (432, 259), (470, 106) ]
+	path3 = [ (159, 147), (153, 450), (457, 428), (470, 106) ]
 
 	untouchable1 = get_path_nodes(path1, sphere_list)
 	untouchable2 = get_path_nodes(path2, sphere_list)
 	untouchable3 = get_path_nodes(path3, sphere_list)
 
-	#draw_path(DISPLAYSURF, (0,0,250), path1);
-	#draw_path(DISPLAYSURF, (0,0,250), path2);
+	draw_path(DISPLAYSURF, (0,0,250), path1);
+	draw_path(DISPLAYSURF, (0,0,250), path2);
 	#draw_path(DISPLAYSURF, (0,0,250), path3);
 	#draw_circles(DISPLAYSURF, (250, 150, 150), untouchable1);
 	#draw_circles(DISPLAYSURF, (150, 250, 150), untouchable2);
@@ -151,36 +151,20 @@ def main():
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 	return;
 	'''
-	'''
-	union1 = Component(untouchable1[0]);	untouchable1.remove(untouchable1[0]);
-	union2 = Component(untouchable3[0]);	untouchable3.remove(untouchable3[0]);
-
-	while len(untouchable1) != 0:
-		for sphere in untouchable1:
-			if union1.intersects(sphere) and union1.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict, DISPLAYSURF):
-				pygame.draw.circle( DISPLAYSURF, (0,150, 0), ( int(sphere.center[0]), int(sphere.center[1]) ), int(sphere.radius), 1 )
-				untouchable1.remove(sphere)
-				time.sleep(0.5)
-
-	while len(untouchable3) != 0:
-		for sphere in untouchable3:
-			if union2.intersects(sphere) and union2.add_sphere_betti(sphere, 0, edge_tri_dict, sphere_tri_dict, DISPLAYSURF):
-				pygame.draw.circle( DISPLAYSURF, (0,150, 0), ( int(sphere.center[0]), int(sphere.center[1]) ), int(sphere.radius), 1 )
-				untouchable3.remove(sphere)
-				time.sleep(0.5)
-	'''
 	union1 = Component(); union1.construct( untouchable1, edge_tri_dict, sphere_tri_dict );
-	union2 = Component(); union2.construct( untouchable3, edge_tri_dict, sphere_tri_dict );
+	union2 = Component(); union2.construct( untouchable2, edge_tri_dict, sphere_tri_dict );
+	union3 = Component(); union3.construct( untouchable3, edge_tri_dict, sphere_tri_dict );
 	#union2.render(DISPLAYSURF, ( 200, 150, 150 )); pygame.display.update();
 
-	print len(union2.get_spheres()), len(untouchable3)
-
 	csp = HomotopyCSP(spheres, contractor.graph, triangle_set, edge_tri_dict, sphere_tri_dict);
-	#csp.greedy( union1, union2, DISPLAYSURF );
+	result = csp.greedy( union1, union2, spheres, DISPLAYSURF );
+	'''
 	if csp.CSP(spheres, union1, union2, DISPLAYSURF):
 		print "Same homotopy"
 	else:
 		print "Different homotopy class"
+	'''
+	print result;
 	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
 
 if __name__ == '__main__':
