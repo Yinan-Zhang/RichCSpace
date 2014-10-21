@@ -396,7 +396,7 @@ class Contraction:
 					continue;
 				if skip_spheres.has_key(neighbor) and skip_spheres[neighbor] != 0:
 					skip_spheres[neighbor] = skip_spheres[neighbor]-1;
-					find_new_sphere = True;
+					#find_new_sphere = True;
 					print "Skip update: {0} \t\t {1}".format( neighbor, skip_spheres[neighbor] )
 					continue;
 				pygame.draw.circle( self.surface, (250,0,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
