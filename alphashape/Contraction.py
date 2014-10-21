@@ -99,12 +99,12 @@ def betti_number(triangle_set, edge_list, edge_tri_dict):
 				matrix[i, j] = 1;
 		i += 1
 
-	print "---- Betti Number ----"
+	#print "---- Betti Number ----"
 	#print "matrix:\n{0}".format(matrix);
 
-	print "Triangles: {0}".format(len(triangle_list));
-	print "edges: {0}".format(len(edge_list));
-	print "vertices: {0}".format(len(vertices));
+	#print "Triangles: {0}".format(len(triangle_list));
+	#print "edges: {0}".format(len(edge_list));
+	#print "vertices: {0}".format(len(vertices));
 	rank = GF2_matrix_rank(matrix, len(edge_list), len(triangle_set));
 	return len(edge_list) - len(vertices) + 1 - rank;
 
@@ -389,10 +389,6 @@ class Contraction:
 
 		while find_new_sphere:							# Loop until we can't find any new spheres to add
 														# Find all neighbor spheres ( such that they are not used in any components )
-			component.render(self.surface, (0,250,0));
-			pygame.display.update();
-			#time.sleep(1);
-
 			neighbors = self.component_neighbor_spheres(component, used_spheres, sphere_tri_dict);  
 			find_new_sphere = False;
 			for neighbor in neighbors:								# Loop over each neighbor sphere
@@ -400,6 +396,9 @@ class Contraction:
 					continue;
 				if skip_spheres.has_key(neighbor) and skip_spheres[neighbor] != 0:
 					skip_spheres[neighbor] = skip_spheres[neighbor]-1;
+					find_new_sphere = True;
+					print "Skip update: {0} \t\t {1}".format( neighbor, skip_spheres[neighbor] )
+					continue;
 				pygame.draw.circle( self.surface, (250,0,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
 				pygame.display.update();
 				#time.sleep(0.5)
@@ -414,9 +413,13 @@ class Contraction:
 				else:
 					if not skip_sphere_attemps.has_key(neighbor):
 						skip_sphere_attemps[neighbor] = 1;
-						skip_spheres[neighbor] = skip_sphere_attemps[neighbor] * 1.5;
+						skip_spheres[neighbor] = skip_sphere_attemps[neighbor] * 2;
+						print "Skip update: {0} \t\t {1}".format( neighbor, skip_spheres[neighbor] )
 					else:
 						skip_sphere_attemps[neighbor] += 1;
+						skip_spheres[neighbor] = skip_sphere_attemps[neighbor] * 2;
+						print "Skip update: {0} \t\t {1}".format( neighbor, skip_spheres[neighbor] )
+
 
 				#time.sleep(1);
 
