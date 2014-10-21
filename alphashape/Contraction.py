@@ -383,6 +383,10 @@ class Contraction:
 		print sphere
 		find_new_sphere = True;							# Mark if we keep finding new spheres
 
+		skip_spheres = {}								# Some spheres will increase the betti number,
+														# we store them here such that they don't have to be tried very round
+		skip_sphere_attemps = {}						# attemps for adding a skip sphere
+
 		while find_new_sphere:							# Loop until we can't find any new spheres to add
 														# Find all neighbor spheres ( such that they are not used in any components )
 			component.render(self.surface, (0,250,0));
@@ -394,6 +398,8 @@ class Contraction:
 			for neighbor in neighbors:								# Loop over each neighbor sphere
 				if used_spheres.has_key(neighbor):
 					continue;
+				if skip_spheres.has_key(neighbor) and skip_spheres[neighbor] != 0:
+					skip_spheres[neighbor] = skip_spheres[neighbor]-1;
 				pygame.draw.circle( self.surface, (250,0,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
 				pygame.display.update();
 				#time.sleep(0.5)
@@ -405,6 +411,12 @@ class Contraction:
 					component.render(self.surface, (0,250,0));
 					pygame.draw.circle( self.surface, (0,250,0), (int(neighbor.center[0]), int(neighbor.center[1])), int(neighbor.radius), 2 );
 					pygame.display.update();
+				else:
+					if not skip_sphere_attemps.has_key(neighbor):
+						skip_sphere_attemps[neighbor] = 1;
+						skip_spheres[neighbor] = skip_sphere_attemps[neighbor] * 1.5;
+					else:
+						skip_sphere_attemps[neighbor] += 1;
 
 				#time.sleep(1);
 

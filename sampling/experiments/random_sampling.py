@@ -30,8 +30,8 @@ def sample_one(n, samples):
 	global height;
 	failed_times = 0;
 	while failed_times < n:
-		rand_x = random.randint(100, width-100);
-		rand_y = random.randint(100, height-100);
+		rand_x = random.randint(50, width-50);
+		rand_y = random.randint(50, height-50);
 		point = ( rand_x, rand_y );
 		r = 40;
 		good_sample = True;

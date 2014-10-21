@@ -98,7 +98,7 @@ def main():
 	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
 	print "Got {0} component(s)".format(len(components))
-	'''
+	
 	i = 1;
 	for comp in components:
 		color = (160/len(components) * i, 200/len(components) * i, 100/len(components) * i );
@@ -108,12 +108,12 @@ def main():
 
 	pygame.display.update();
 	#time.sleep(5);
-	'''
+	return;
 	##################################################
 	######        Contruct Path
-	path1 = [ (159, 147), (470, 106) ]
-	path2 = [ (159, 147), (190, 263), (432, 259), (470, 106) ]
-	path3 = [ (159, 147), (153, 450), (457, 428), (470, 106) ]
+	path1 = [ (93, 93), (522, 50) ]
+	path2 = [ (93, 93), (190, 263), (432, 259), (522, 50) ]
+	path3 = [ (93, 93), (153, 450), (457, 428), (522, 50) ]
 
 	untouchable1 = get_path_nodes(path1, sphere_list)
 	untouchable2 = get_path_nodes(path2, sphere_list)
