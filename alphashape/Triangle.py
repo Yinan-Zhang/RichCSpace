@@ -125,6 +125,9 @@ class Triangle:
 class Triangulator:
 	def __init__(self, spheres):
 		self.spheres = spheres;
+		self.simplices_index = None;
+		self.simplices = None;
+		self.triangles = None;
 
 	def triangulate(self):
 		def __add2dict__(dct, key, content):
@@ -159,6 +162,7 @@ class Triangulator:
 
 		points_np = numpy.array(points);
 		triangles_index = Delaunay(points_np);
+		self.simplices_index = triangles_index.simplices;
 
 		triangle_set = {};
 		sphere_tri_dict = {};
@@ -181,5 +185,8 @@ class Triangulator:
 				__add_edge_2_dict__(edge_tri_dict, (sphere0, sphere2), triangle);
 				__add_edge_2_dict__(edge_tri_dict, (sphere1, sphere2), triangle);
 
+		self.triangles = triangle_set
 		return triangle_set, sphere_tri_dict, edge_tri_dict;
 
+	def build_simplices(self):
+		
