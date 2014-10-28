@@ -89,7 +89,7 @@ def main():
 
 	triangle_set, sphere_tri_dict, edge_tri_dict = triangulator.triangulate();
 
-	#draw_triangles(DISPLAYSURF, triangle_set, (100, 250, 100));
+	draw_triangles(DISPLAYSURF, triangle_set, (100, 250, 100));
 
 
 	##################################################

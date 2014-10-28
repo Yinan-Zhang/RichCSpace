@@ -76,8 +76,12 @@ class HomotopyCSP:
 			'''returns the heuristic of the sphere'''
 			return (sphere.center - center).r();
 
-		union_center = center(union1, union2);
-		union1.render( surface, (200,200,00) );	union2.render( surface, (200,000,200) );
+		pdb.set_trace();
+
+		#union_center = center(union1, union2);
+		union1.render( surface, (200,200,00) );	
+		pygame.display.update();
+		union2.render( surface, (200,000,200) );
 		pygame.display.update();
 		used_spheres = {};
 		for sphere in union1.get_spheres():
@@ -87,18 +91,18 @@ class HomotopyCSP:
 			used_spheres[sphere] = 1;
 		
 		union1cp = copy.copy( union1 );
-		union = union1cp.merge(union2, self.edge_tri_dict, self.sphere_tri_dict);
+		union = union1.merge(union2, self.edge_tri_dict, self.sphere_tri_dict);
 		neighbors = self.neighbor_spheres(union, used_spheres)
 		heuristic = PriorityQueue();
 
 		if len(neighbors) == 0:
-			pass;   #### Think about this
+			pass;   ####sThink about this
 		for neighbor in neighbors:
 			if not used_spheres.has_key(neighbor) and all_spheres.has_key(neighbor):
-				#heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
-				heuristic.push(neighbor, heur_cent(neighbor, union_center));
+				heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
+				#heuristic.push(neighbor, heur_cent(neighbor, union_center));
 
-		#pdb.set_trace();
+		pdb.set_trace();
 		while not heuristic.isEmpty() and not len(union.spheres) == len(all_spheres.keys()):
 			choice = heuristic.pop()
 			
@@ -119,8 +123,8 @@ class HomotopyCSP:
 				new_neighbors = self.neighbor_spheres(temp, used_spheres)
 				for neighbor in new_neighbors:
 					if not used_spheres.has_key(neighbor) and all_spheres.has_key(neighbor):
-						#heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
-						heuristic.push(neighbor, heur_cent(neighbor, union_center));
+						heuristic.push( neighbor, heur_dist(neighbor, union1, union2) );
+						#heuristic.push(neighbor, heur_cent(neighbor, union_center));
 			
 		betti = union.betti_number(self.edge_tri_dict);
 		print betti

@@ -213,7 +213,7 @@ class Triangulator:
 			triangle = Triangle(sphere0, sphere1, sphere2);
 			triangle_set[triangle] = 1;
 
-		return triangle_set;
+		return triangle_set, points_np, triangles_index;
 
 	def triangulate(self):
 		def __add2dict__(dct, key, content):

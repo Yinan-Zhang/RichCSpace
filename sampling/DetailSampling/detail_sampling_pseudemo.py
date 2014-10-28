@@ -8,16 +8,39 @@ from geometry 		import *
 from hyper_geometry import *
 from Triangle   	import *
 
+import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 import pylab as pl
 from matplotlib import cm
 import numpy as np
 
+pl.ion()
+#matplotlib.rcParams['backend'] = "GTK3Cairo"
+#matplotlib.use('GTK3Cairo')
+
+#import matplotlib.rcsetup as rcsetup
+#print(rcsetup.all_backends)
+print matplotlib.get_backend()
+
 fig = pl.figure();
 ax = pl.axes( projection = '3d' );
 
+def plot_triangles( triangle_index, points ):
+	x = []; y = []; z = []; r = [];
+	for p in points:
+		x.append(p[0]);
+		y.append(p[1]);
+		z.append(p[2]);
+	x = np.array(x);	y = np.array(y);	z = np.array(z);
+	
+	pl.cla();
+	ax = pl.axes( projection = '3d' );
+	ax.plot_trisurf(x, y, z, triangles=triangle_index, cmap=plt.cm.Spectral)
+	pl.show();
+
 def plot_points( spheres):
 	print "Plotting {0} spheres".format( len(spheres) );
+	
 	pl.cla();
 	ax = pl.axes( projection = '3d' );
 	x = []; y = []; z = []; r = [];
@@ -59,12 +82,13 @@ def generate_random_samples( n, dim ):
 def detail_sample_once( init_spheres ):
 	#pdb.set_trace();
 	triangulator = Triangulator(init_spheres);
-	triangle_set = triangulator.triangulate_raw();
+	triangle_set, points_np, triangles_index = triangulator.triangulate_raw();
 
 	triangle_list = triangle_set.keys();
 	# clear screen
 	# draw triangles
 	plot_points(init_spheres);
+	#plot_triangles(triangle_index, points_np)
 
 	spheres = init_spheres;
 	for tri in triangle_set.keys():
