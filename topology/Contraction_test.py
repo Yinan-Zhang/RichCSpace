@@ -95,22 +95,23 @@ def main():
 	##################################################
 	######        Contruct components
 	contractor = Contraction(sphere_list, DISPLAYSURF);
-	'''
+	
 	components = contractor.contract(triangle_set, edge_tri_dict, sphere_tri_dict);
 
 	print "Got {0} component(s)".format(len(components))
 	
 	i = 1;
 	for comp in components:
-		color = (160/len(components) * i, 200/len(components) * i, 100/len(components) * i );
+		color = (250/len(components) * i, 200/len(components) * i, 100/len(components) * i );
 		comp.render(DISPLAYSURF, color);
 		#print comp.get_spheres();
 		i+=1
 
 	pygame.display.update();
-	#time.sleep(5);
-	#return;
-	'''
+	pygame.image.save(DISPLAYSURF, "homotopy.PNG")
+	time.sleep(5);
+	return;
+	
 	##################################################
 	######        Contruct Path
 	path1 = [ (93, 93), (522, 50) ]

@@ -78,7 +78,7 @@ class HomotopyCSP:
 
 		pdb.set_trace();
 
-		#union_center = center(union1, union2);
+		union_center = center(union1, union2);
 		union1.render( surface, (200,200,00) );	
 		pygame.display.update();
 		union2.render( surface, (200,000,200) );
