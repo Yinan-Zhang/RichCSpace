@@ -12,4 +12,6 @@ So we have three spaces:
 	get collision distance(time) here.
 2. Configuration Space:
 	By regarding a robot as infinite number of particles, we can build a C-space with
-	infinite number of dimensions
+	infinite number of dimensions. 
+3. Parameterized Configuration Space.
+	Motion planning happens here. 
