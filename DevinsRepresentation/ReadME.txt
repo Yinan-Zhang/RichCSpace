@@ -13,5 +13,7 @@ So we have three spaces:
 2. Configuration Space:
 	By regarding a robot as infinite number of particles, we can build a C-space with
 	infinite number of dimensions. 
+	Actually, it doesn't have to be infinite dimensions. For example, a rigid body in 
+	the plane could be represented using the coordinate of two points in the robot.
 3. Parameterized Configuration Space.
 	Motion planning happens here. 

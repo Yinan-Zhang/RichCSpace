@@ -77,6 +77,25 @@ class Polygon:
 			dists.append(line.dist_line_seg(line_seg));
 		return min(dists);
 
+	def collis_dist_to_poly( self, other ):
+		'''the collision distance to another polygon'''
+		if self.intersects_poly(other):
+			return 0.0;
+		dists = [];
+		for line in other.lines:
+			dists.append( self.dist2line(line) );
+		return min(dists);
+
+	def displacement_dist( self, other ):
+		'''displacement distance to another polygon.
+		It requires 'other' to be exactly the same shape of self'''
+		dists = [];
+		for i in range(len(self.vertices)):
+			vert1 = self.vertices[i];
+			vert2 = other.vertices[i];
+			dists.append((vert1-vert2).r());
+		return max(dists);
+
 	def contains( self, point ):
 		'''Assume the polygon is a simple polygon. determine if point is inside the polygon.
 		@param point: v2	Point.'''
