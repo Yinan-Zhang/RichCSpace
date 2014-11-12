@@ -32,12 +32,12 @@ class Polygon:
 		self.lines.append( line_segment( start, end ) );
 		pass;
 
-	def render(self, surface, color):
+	def render(self, surface, color, width = 0):
 		"""render the polygon to surface."""
 		pointlist = [];
 		for vertex in self.vertices:
 			pointlist.append( (int(vertex.x), int(vertex.y)) );
-		pygame.draw.polygon(surface, color, pointlist);
+		pygame.draw.polygon(surface, color, pointlist, width);
 		pass;
 
 	def translate( self, vect ):

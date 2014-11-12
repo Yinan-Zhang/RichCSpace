@@ -31,7 +31,7 @@ Rigid2D:
 __author__ = 'Yinan Zhang	Dartmouth College'
 __revision__ = '$Revision$'
 
-import sys, random, copy
+import sys, random, copy, pdb
 sys.path.append('../basics/math')
 
 import pygame;
@@ -72,19 +72,35 @@ class Rigid2D:
 		ptlist = self.get_points();
 		return Polygon(ptlist);
 
-	def render(self, surf, color):
+	def render_head( self, surf ):
+		A = v2(self.state[0], self.state[1]);
+		pygame.draw.circle( surf, (250, 0,0), (int(A.x), int(A.y)), 5 );
+
+	def render(self, surf, color, width = 0):
 		'''render it to the screen'''
 		rectangle = self.__get_rectangle__();
-		rectangle.render(surf, color);
+		rectangle.render(surf, color, width);
+		A = v2(self.state[0], self.state[1]);
+		pygame.draw.circle( surf, (250, 0,0), (int(A.x), int(A.y)), 5 );
 
 	def set_state(self, state):
 		if(self.is_state_valid(state)):
 			self.state = state;
 		pass;
 
+	def displacement_dist(self, state):
+		'''get the displacement distance between current state and given state'''
+		old_state = copy.copy(self.state);
+		origin_rect = self.__get_rectangle__();
+		self.set_state(state);
+		new_rect = self.__get_rectangle__();
+		self.set_state(old_state);
+		return origin_rect.displacement_dist(new_rect);
+
 	def get_param_state(self):
 		'''Get the parameterized state representation. In such representation, 
 		the state of a rigid body in 2D is in SE(2) space. (x, y, theta)'''
+		pdb.set_trace()
 		A = v2(self.state[0], self.state[1]);
 		B = v2(self.state[2], self.state[3]);
 		theta = math.atan2(A.y-B.y, A.x-B.x);
@@ -94,13 +110,14 @@ class Rigid2D:
 	def is_state_valid(self, state):
 		A = v2(self.state[0], self.state[1]);
 		B = v2(self.state[2], self.state[3]);
-		return (A-B).r() - self.length <= 0.1;
+		return math.fabs( (A-B).r() - self.length ) <= 0.01;
 
 	def get_random_state(self, disp_dist):
 		'''get a random state that has a fixed displacement-distance to current state.
 		The idea is to have a random state first. Then pull/push the robot until the 
 		displacement-distance is equal to disp_dist'''
-		B_ 		= v2( random.randint(0, 800), random.randint(0, 800) );		# random point position
+		center  = v2( (self.state[0]+self.state[2])/2.0, (self.state[1]+self.state[3])/2.0)
+		B_ 		= v2( random.randint(center.x-300, center.x+300), random.randint(center.y-300, center.y+300) );		# random point position
 		theta 	= (random.randint(-180, 180) / 360.0) * 2 * math.pi;		# random orientation.
 		l 		= self.length;
 		A_ 		= v2( B_.x + l * math.cos(theta), B_.y + l * math.sin(theta) );
@@ -122,9 +139,9 @@ class Rigid2D:
 				max_idx = i;
 
 		# Get max dist direction.
-		max_dist_dir = (new_pnts[max_idx] - old_pnts[max_idx]).normalize();
-		B  = v2(self.state[2], self.state[3]);
-		B_ = B + disp_dist * max_dist_dir;
+		max_dist_dir   = (new_pnts[max_idx] - old_pnts[max_idx])
+		max_dist_dir_n = max_dist_dir.normalize();
+		B_ = B_ - max_dist_dir + disp_dist * max_dist_dir_n;
 		A_ = v2( B_.x + l * math.cos(theta), B_.y + l * math.sin(theta) );
 
 		return (A_.x, A_.y, B_.x, B_.y)
