@@ -100,7 +100,6 @@ class Rigid2D:
 	def get_param_state(self):
 		'''Get the parameterized state representation. In such representation, 
 		the state of a rigid body in 2D is in SE(2) space. (x, y, theta)'''
-		pdb.set_trace()
 		A = v2(self.state[0], self.state[1]);
 		B = v2(self.state[2], self.state[3]);
 		theta = math.atan2(A.y-B.y, A.x-B.x);
