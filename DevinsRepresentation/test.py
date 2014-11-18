@@ -100,7 +100,7 @@ def main():
 	save(p2group, 'classified_p2_group.txt');
 	save(p3group, 'classified_p3_group.txt');
 	save(p4group, 'classified_p4_group.txt');
-	save(param_states1, 'parameterized_p1_states.txt')
+	save(param_states1, 'parameterized_p1_states.txt');
 	
 
 if __name__ == '__main__':
