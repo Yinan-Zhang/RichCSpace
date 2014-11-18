@@ -70,8 +70,12 @@ def main():
 	DISPLAYSURF2 = DISPLAYSURF.copy();
 	DISPLAYSURF3 = DISPLAYSURF.copy();
 	DISPLAYSURF4 = DISPLAYSURF.copy();
+	param_states1 = [];
 	for state in p1group:
 		robot.set_state(state);
+		param_state = robot.get_param_state()
+		color = (v2(param_state[0], param_state[1]) - v2(origin_param_state[0], origin_param_state[1])).r();
+		param_states1.append( (param_state[0],param_state[1],param_state[2],color ) );
 		robot.render(DISPLAYSURF,  (250,0,0), 1 );
 		robot.render(DISPLAYSURF1, (250,0,0), 1 );
 	for state in p2group:
@@ -96,6 +100,7 @@ def main():
 	save(p2group, 'classified_p2_group.txt');
 	save(p3group, 'classified_p3_group.txt');
 	save(p4group, 'classified_p4_group.txt');
+	save(param_states1, 'parameterized_p1_states.txt')
 	
 
 if __name__ == '__main__':
