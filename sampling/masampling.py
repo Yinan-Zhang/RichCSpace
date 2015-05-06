@@ -13,7 +13,7 @@ from l1_geometry 	import *
 
 class Sample():
 	'''A sample is a configuration with clearance. '''
-	def __init__( self, center, radius, mode ):
+	def __init__( self, center, radius, mode = 'l2' ):
 		self.mode = mode;
 		if mode == 'L1' or mode == 'l1':
 			self.sphere = l1_sphere(center, radius);
